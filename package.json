@@ -1,0 +1,27 @@
+{
+  "name": "@mihilmy/dynamodb-adapters",
+  "version": "0.0.0",
+  "description": "A simpler way to write DynamoDB expressions",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mihilmy/dynamodb-adapters.git"
+  },
+  "keywords": [
+    "dynamodb",
+    "dynamo",
+    "aws",
+    "adapters",
+    "simple"
+  ],
+  "author": "@mihilmy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mihilmy/dynamodb-adapters/issues"
+  },
+  "homepage": "https://github.com/mihilmy/dynamodb-adapters#README",
+  "devDependencies": {
+    "aws-sdk": "^2.817.0"
+  }
+}
