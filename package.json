@@ -22,6 +22,10 @@
   },
   "homepage": "https://github.com/mihilmy/dynamodb-adapters#README",
   "devDependencies": {
+    "@aws-cdk/aws-dynamodb": "^1.80.0",
     "aws-sdk": "^2.817.0"
+  },
+  "peerDependencies": {
+    "aws-sdk": "2.x"
   }
 }
