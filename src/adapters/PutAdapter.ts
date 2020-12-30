@@ -10,16 +10,18 @@ import { Adapter, ConditionalPutOperator } from "../types/Adapter";
 import { AttributeValueType, DynamoErrorCode } from "../types/Dynamo";
 
 export class PutAdapter<T> implements Adapter<T | false | undefined> {
-  private builder: PutBuilder<T>;
-  private putExpression: PutInput;
+  protected builder: PutBuilder<T>;
+  protected putExpression: PutInput;
 
-  constructor(private docClient: DocumentClient, private tableProps: TableProps<T, string>) {
-    this.builder = new PutBuilder(this.tableProps);
-    this.putExpression = { TableName: this.tableProps.tableName, ReturnValues: "ALL_OLD" } as PutInput;
+  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, string>) {
+    this.builder = new PutBuilder(tableProps);
+    this.putExpression = { TableName: tableProps.tableName, ReturnValues: "ALL_OLD" } as PutInput;
   }
 
   async call() {
+    // NOTE: Builder actually copies the expression into a new object
     this.putExpression = this.builder.build(this.putExpression);
+    console.debug(this.putExpression);
 
     try {
       const { Attributes: oldItem } = await this.docClient.put(this.putExpression).promise();
@@ -33,7 +35,7 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
     }
   }
 
-  put(item: T) {
+  put(item: T): PutAdapter<T> {
     this.putExpression.Item = item;
     return this;
   }

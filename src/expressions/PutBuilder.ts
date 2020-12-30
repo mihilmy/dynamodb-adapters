@@ -10,13 +10,15 @@ export class PutBuilder<T> extends ExpressionsBuilder<T> {
     this.currentExpressionList = this.conditionalPutExpression;
   }
 
+  hasExpression() {
+    return this.conditionalPutExpression.length !== 0;
+  }
+
   build(putInput: PutInput) {
     const input = super.addCommonInputs<PutInput>(putInput);
-    if (this.conditionalPutExpression.length !== 0) {
+    if (this.hasExpression()) {
       input.ConditionExpression = this.conditionalPutExpression.join(" ");
     }
-
-    console.debug(input);
 
     return input;
   }

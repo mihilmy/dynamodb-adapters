@@ -13,6 +13,7 @@ export type PutInput = DocumentClient.PutItemInput;
 export type BatchGetInput = DocumentClient.BatchGetItemInput;
 export type BatchPutInput = DocumentClient.BatchWriteItemInput;
 export type ScanInput = DocumentClient.ScanInput;
+export type BatchRequests = BatchGetInput | BatchPutInput;
 export type CommonInput = QueryInput & GetInput & PutInput & BatchGetInput & BatchPutInput & ScanInput;
 export type ExpressionNameMap = DocumentClient.ExpressionAttributeNameMap;
 export type ExpressionValueMap = DocumentClient.ExpressionAttributeValueMap;
