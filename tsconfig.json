@@ -7,8 +7,6 @@
     "moduleResolution": "node",
     "declaration": true,
     "outDir": "lib",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "keyofStringsOnly": true
