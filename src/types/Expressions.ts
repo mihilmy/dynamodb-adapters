@@ -1,6 +1,8 @@
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { TypedPathNode } from "typed-path";
 
+import { AttributeValueType } from "./Dynamo";
+
 /******************************************************************************************************************************************
  *                                                  TYPE ALIASING FOR DOC CLIENT                                                          *
  ******************************************************************************************************************************************/
@@ -11,19 +13,9 @@ export type PutInput = DocumentClient.PutItemInput;
 export type BatchGetInput = DocumentClient.BatchGetItemInput;
 export type BatchPutInput = DocumentClient.BatchWriteItemInput;
 export type ScanInput = DocumentClient.ScanInput;
+export type CommonInput = QueryInput & GetInput & PutInput & BatchGetInput & BatchPutInput & ScanInput;
 export type ExpressionNameMap = DocumentClient.ExpressionAttributeNameMap;
 export type ExpressionValueMap = DocumentClient.ExpressionAttributeValueMap;
-export enum AttributeValueType {
-  String = "S",
-  StringSet = "SS",
-  Number = "N",
-  NumberSet = "NS",
-  Binary = "B",
-  BinarySet = "BS",
-  Boolean = "BOOL",
-  Null = "NULL",
-  List = "L",
-}
 
 /******************************************************************************************************************************************
  *                                                  INTERNAL EXPRESSION OPERATORS                                                         *
@@ -35,8 +27,6 @@ export type SortOrder = "ASC" | "DESC";
 
 export interface BaseExpression<T> {
   attrPath: TypedPathNode<T>;
-  conditional: ConditionalOperator;
-  expressionList: string[];
 }
 
 export interface ComparisonExpressionInput<T> extends BaseExpression<T> {

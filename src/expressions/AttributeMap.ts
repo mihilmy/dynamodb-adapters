@@ -14,7 +14,7 @@ export class AttributeMap {
   }
 
   addValue(path: TypedPathNode<any>, attrValue: any) {
-    if (!attrValue) return;
+    if (attrValue === undefined || attrValue === null) return;
 
     const mapKey = `${value(path.$path)}${this.valueCounter++ || ""}`;
     this.valueMap[mapKey] = { mapKey, attrValue };

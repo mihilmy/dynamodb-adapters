@@ -2,7 +2,6 @@ import { TypedPathNode } from "typed-path";
 import { AttributeMap } from "./AttributeMap";
 import { GlobalIndex, LocalIndex, TableProps } from "../types/Props";
 import {
-  ConditionalOperator,
   ComparisonExpressionInput,
   ExistenceCheckerInput,
   BeginsWithInput,
@@ -10,27 +9,26 @@ import {
   ContainsInput,
   AttributeTypeCheck,
   InListInput,
+  ConditionalOperator,
+  CommonInput,
 } from "../types/Expressions";
 
-export class BaseBuilder<T> {
-  protected tableName: string;
-  protected partitionKeyName: keyof T;
-  protected sortKeyName?: keyof T;
+export abstract class ExpressionsBuilder<T> {
+  private partitionKeyName: keyof T;
+  private sortKeyName?: keyof T;
+
+  // Common attribute map used by all expressions and building expressions
   protected attributeMap: AttributeMap = new AttributeMap();
+  private conditionalOperator: ConditionalOperator = "AND";
+
+  // Only available for Get/BatchGet/Query/Scan
+  private projectedSet: Set<string> = new Set();
+  // Used to determine the current list to populate
+  protected currentExpressionList!: string[];
 
   constructor(private tableProps: TableProps<T, string>) {
-    this.tableName = tableProps.tableName;
     this.partitionKeyName = tableProps.partitionKey.name;
     this.sortKeyName = tableProps.sortKey?.name;
-  }
-
-  /**
-   * Returns a comma separated string expression that identifies one or more attributes to retrieve from the table.
-   *
-   * @param selectedPaths item paths stored
-   */
-  protected projectAttributes(selectedPaths: TypedPathNode<T>[]) {
-    return selectedPaths.map((path) => this.attributeMap.addName(path)).join(",");
   }
 
   /**
@@ -38,44 +36,60 @@ export class BaseBuilder<T> {
    *
    * @param input comparison input
    */
-  protected compare({ attrPath, attrValue, comparison, expressionList, conditional }: ComparisonExpressionInput<T>) {
+  compare({ attrPath, attrValue, comparison }: ComparisonExpressionInput<T>) {
     const expression = `${this.attributeMap.addName(attrPath)} ${comparison} ${this.attributeMap.addValue(attrPath, attrValue)}`;
-    this.addExpression(expressionList, conditional, expression);
+    this.addExpression(expression);
   }
 
-  protected existence({ exists, attrPath, expressionList, conditional }: ExistenceCheckerInput<T>) {
+  existence({ exists, attrPath }: ExistenceCheckerInput<T>) {
     const expression = `attribute_${exists ? "" : "not_"}exists(${this.attributeMap.addName(attrPath)})`;
-    this.addExpression(expressionList, conditional, expression);
+    this.addExpression(expression);
   }
 
-  protected beginsWith({ attrPath, substring, expressionList, conditional }: BeginsWithInput<T>) {
+  beginsWith({ attrPath, substring }: BeginsWithInput<T>) {
     const expression = `begins_with(${this.attributeMap.addName(attrPath)}, ${this.attributeMap.addValue(attrPath, substring)})`;
-    this.addExpression(expressionList, conditional, expression);
+    this.addExpression(expression);
   }
 
-  protected between({ attrPath, lowerBound, upperBound, expressionList, conditional }: BetweenInput<T>) {
+  between({ attrPath, lowerBound, upperBound }: BetweenInput<T>) {
     // prettier-ignore
     const expression = `${this.attributeMap.addName(attrPath)} BETWEEN ${this.attributeMap.addValue(attrPath, lowerBound)} AND ${this.attributeMap.addValue(attrPath, upperBound)}`;
-    this.addExpression(expressionList, conditional, expression);
+    this.addExpression(expression);
   }
 
-  protected inList({ attrPath, values, expressionList, conditional }: InListInput<T>) {
+  inList({ attrPath, values }: InListInput<T>) {
     // prettier-ignore
     const expression = `${this.attributeMap.addName(attrPath)} IN (${values.map(value => this.attributeMap.addValue(attrPath, value)).join(",")})`;
-    this.addExpression(expressionList, conditional, expression);
+    this.addExpression(expression);
   }
 
-  protected contains({ attrPath, searchValue, expressionList, conditional }: ContainsInput<T>) {
+  contains({ attrPath, searchValue }: ContainsInput<T>) {
     const expression = `contains(${this.attributeMap.addName(attrPath)}, ${this.attributeMap.addValue(attrPath, searchValue)})`;
-    this.addExpression(expressionList, conditional, expression);
+    this.addExpression(expression);
   }
 
-  protected attributeType({ attrPath, type, expressionList, conditional }: AttributeTypeCheck<T>) {
+  attributeType({ attrPath, type }: AttributeTypeCheck<T>) {
     const expression = `attribute_type(${this.attributeMap.addName(attrPath)}, ${this.attributeMap.addValue(attrPath, type)})`;
-    this.addExpression(expressionList, conditional, expression);
+    this.addExpression(expression);
   }
 
-  protected useIndexKeys(indexName: string) {
+  setConditional(operator: ConditionalOperator) {
+    this.conditionalOperator = operator;
+  }
+
+  /**
+   * Returns a comma separated string expression that identifies one or more attributes to retrieve from the table.
+   *
+   * @param selectedPaths item paths stored
+   */
+  projectAttributes(selectedPaths: TypedPathNode<T>[]) {
+    for (const path of selectedPaths) {
+      this.projectedSet.add(path.$path);
+      this.attributeMap.addName(path);
+    }
+  }
+
+  useIndexKeys(indexName: string) {
     if (!this.tableProps.indexMap?.[indexName]) {
       throw new Error("Index name has not been defined in tableProps.indexMap configuration");
     }
@@ -96,19 +110,31 @@ export class BaseBuilder<T> {
     }
   }
 
-  protected isKeyCondition(attrName: keyof T) {
+  //@ts-ignore
+  private isKeyCondition(attrName: keyof T) {
     return [this.partitionKeyName, this.sortKeyName].includes(attrName);
   }
 
-  protected addExpression(expression: string[], operator: ConditionalOperator, newExpression: string) {
-    const length = expression.length;
+  private addExpression(newExpression: string) {
+    const length = this.currentExpressionList.length;
     if (length === 0) {
-      expression.push(newExpression);
+      this.currentExpressionList.push(newExpression);
     } else {
-      expression.push(operator);
-      expression.push(newExpression);
+      this.currentExpressionList.push(this.conditionalOperator);
+      this.currentExpressionList.push(newExpression);
     }
 
     return this;
+  }
+
+  addCommonInputs<R>(baseInput: any) {
+    const result: Partial<CommonInput> = { ...baseInput };
+    const expressionAttributeNames = this.attributeMap.toExpressionAttributeNames();
+    const expressionAttributeValues = this.attributeMap.toExpressionAttributeValues();
+
+    if (expressionAttributeNames) result.ExpressionAttributeNames = expressionAttributeNames;
+    if (expressionAttributeValues) result.ExpressionAttributeValues = expressionAttributeValues;
+
+    return result as R;
   }
 }
