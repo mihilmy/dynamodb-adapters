@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="DynamoDB Adapters" src="https://i.imgur.com/bGiPSIc.png"  />
+    <img alt="DynamoDB Adapters" src="https://i.imgur.com/JRhPI6A.png"  />
   <h1 align="center">DynamoDB Adapters</h1>
 </p>
 
