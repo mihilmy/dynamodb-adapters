@@ -7,7 +7,7 @@ import { PutBuilder } from "../expressions/PutBuilder";
 import { PutInput } from "../types/Expressions";
 import { TableProps } from "../types/Props";
 import { Adapter, ConditionalPutOperator } from "../types/Adapter";
-import { AttributeValueType, DynamoErrorCode } from "../types/Dynamo";
+import { AttributeValueType, DynamoErrorCode, PersistedItem } from "../types/Dynamo";
 
 export class PutAdapter<T> implements Adapter<T | false | undefined> {
   protected builder: PutBuilder<T>;
@@ -36,7 +36,7 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
   }
 
   put(item: T): PutAdapter<T> {
-    this.putExpression.Item = item;
+    this.putExpression.Item = new PersistedItem(item);
     return this;
   }
 

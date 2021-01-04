@@ -3,6 +3,7 @@ import { AWSError } from "aws-sdk/lib/error";
 import { PromiseResult, Request } from "aws-sdk/lib/request";
 
 import { BatchRequests } from "./Expressions";
+import { PersistedItem } from "./Dynamo";
 import { TableProps } from "./Props";
 
 abstract class RequestQueue<R = any> {
@@ -62,8 +63,8 @@ export class BatchPutQueue<R> extends RequestQueue<R> {
     return output.UnprocessedItems?.[this.tableProps.tableName]?.map((item) => item.PutRequest?.Item as R) ?? [];
   }
 
-  protected createRequest(Item: any): WriteRequest {
-    return { PutRequest: { Item } };
+  protected createRequest(item: any): WriteRequest {
+    return { PutRequest: { Item: new PersistedItem(item) } };
   }
 
   protected setMaxBatchSize(): void {
