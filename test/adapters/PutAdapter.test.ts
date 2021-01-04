@@ -5,10 +5,11 @@ import { User, UserTableProps, $User } from "../TestData";
 
 test("T1: Conditional Put", async () => {
   const user = new User({ username: "omar", version: 1 });
+  // Use keyof operator to reference variables instead of typed-path
   const result1 = await new PutAdapter<User>(DocClient, UserTableProps)
     .put(user)
-    .if($User.version, "DoesNotExist")
-    .orIf($User.version, "<=", user.version)
+    .if("version", "DoesNotExist")
+    .orIf("version", "<=", user.version)
     .call();
   expect(result1).toBeUndefined();
 

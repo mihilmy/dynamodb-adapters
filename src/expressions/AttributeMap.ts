@@ -1,5 +1,6 @@
-import { TypedPathKey, TypedPathNode } from "typed-path";
-import { ExpressionNameMap, ExpressionValueMap, NameMap, ValueEntry, ValueMap } from "../types/Expressions";
+import { TypedPathKey } from "typed-path";
+
+import { ExpressionNameMap, ExpressionValueMap, NameMap, ValueEntry, ValueMap, AttributePath } from "../types/Expressions";
 
 const ATTRIBUTE_NAME_TOKEN = "#";
 const ATTRIBUTE_VALUE_TOKEN = ":";
@@ -9,14 +10,16 @@ export class AttributeMap {
   private valueMap: ValueMap = {};
   private valueCounter: number = 0;
 
-  addName(path: TypedPathNode<any>) {
-    return path.$raw.map((entry) => this.addNameEntry(entry)).join(".");
+  addName(path: AttributePath<any>) {
+    const pathList = typeof path === "string" ? [path] : path.$raw;
+    return pathList.map((entry) => this.addNameEntry(entry)).join(".");
   }
 
-  addValue(path: TypedPathNode<any>, attrValue: any) {
+  addValue(path: AttributePath<any>, attrValue: any) {
     if (attrValue === undefined || attrValue === null) return;
 
-    const mapKey = `${value(path.$path)}${this.valueCounter++ || ""}`;
+    const pathString = typeof path === "string" ? path : path.$path;
+    const mapKey = `${value(pathString)}${this.valueCounter++ || ""}`;
     this.valueMap[mapKey] = { mapKey, attrValue };
     return mapKey;
   }

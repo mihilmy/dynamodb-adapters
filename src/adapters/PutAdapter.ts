@@ -1,11 +1,10 @@
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { AWSError } from "aws-sdk/lib/error";
-import { TypedPathNode } from "typed-path";
 
 import { PutBuilder } from "../expressions/PutBuilder";
 import { fromDynamoItem, toDynamoDBItem } from "../utils";
 
-import { PutInput } from "../types/Expressions";
+import { PutInput, AttributePath } from "../types/Expressions";
 import { TableProps } from "../types/Props";
 import { Adapter, ConditionalPutOperator } from "../types/Adapter";
 import { AttributeValueType, DynamoErrorCode } from "../types/Dynamo";
@@ -41,13 +40,13 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
     return this;
   }
 
-  if(attrPath: TypedPathNode<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): PutAdapter<T>;
-  if(attrPath: TypedPathNode<T>, operator: "AttributeType", attrType: AttributeValueType): PutAdapter<T>;
-  if(attrPath: TypedPathNode<T>, operator: "BeginsWith", substring: string): PutAdapter<T>;
-  if(attrPath: TypedPathNode<T>, operator: "Contains", searchValue: string | number): PutAdapter<T>;
-  if(attrPath: TypedPathNode<T>, operator: "Exists" | "DoesNotExist"): PutAdapter<T>;
-  if(attrPath: TypedPathNode<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
-  if(attrPath: TypedPathNode<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
+  if(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): PutAdapter<T>;
+  if(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): PutAdapter<T>;
+  if(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): PutAdapter<T>;
+  if(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): PutAdapter<T>;
+  if(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): PutAdapter<T>;
+  if(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
+  if(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
     switch (operator) {
       case "<":
       case "<=":
@@ -81,25 +80,25 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
     return this;
   }
 
-  andIf(attrPath: TypedPathNode<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): PutAdapter<T>;
-  andIf(attrPath: TypedPathNode<T>, operator: "AttributeType", attrType: AttributeValueType): PutAdapter<T>;
-  andIf(attrPath: TypedPathNode<T>, operator: "BeginsWith", substring: string): PutAdapter<T>;
-  andIf(attrPath: TypedPathNode<T>, operator: "Contains", searchValue: string | number): PutAdapter<T>;
-  andIf(attrPath: TypedPathNode<T>, operator: "Exists" | "DoesNotExist"): PutAdapter<T>;
-  andIf(attrPath: TypedPathNode<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
-  andIf(attrPath: TypedPathNode<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
+  andIf(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): PutAdapter<T>;
+  andIf(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): PutAdapter<T>;
+  andIf(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): PutAdapter<T>;
+  andIf(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): PutAdapter<T>;
+  andIf(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): PutAdapter<T>;
+  andIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
+  andIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
     this.builder.setConditional("AND");
     //@ts-ignore
     return this.if(attrPath, operator, attrValue);
   }
 
-  orIf(attrPath: TypedPathNode<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): PutAdapter<T>;
-  orIf(attrPath: TypedPathNode<T>, operator: "AttributeType", attrType: AttributeValueType): PutAdapter<T>;
-  orIf(attrPath: TypedPathNode<T>, operator: "BeginsWith", substring: string): PutAdapter<T>;
-  orIf(attrPath: TypedPathNode<T>, operator: "Contains", searchValue: string | number): PutAdapter<T>;
-  orIf(attrPath: TypedPathNode<T>, operator: "Exists" | "DoesNotExist"): PutAdapter<T>;
-  orIf(attrPath: TypedPathNode<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
-  orIf(attrPath: TypedPathNode<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
+  orIf(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): PutAdapter<T>;
+  orIf(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): PutAdapter<T>;
+  orIf(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): PutAdapter<T>;
+  orIf(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): PutAdapter<T>;
+  orIf(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): PutAdapter<T>;
+  orIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
+  orIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
     this.builder.setConditional("OR");
     //@ts-ignore
     return this.if(attrPath, operator, attrValue);

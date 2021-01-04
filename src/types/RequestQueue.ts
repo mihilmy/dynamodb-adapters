@@ -2,8 +2,9 @@ import { BatchGetItemOutput, BatchWriteItemOutput, Key, WriteRequest } from "aws
 import { AWSError } from "aws-sdk/lib/error";
 import { PromiseResult, Request } from "aws-sdk/lib/request";
 
+import { toDynamoDBItem } from "../utils";
+
 import { BatchRequests } from "./Expressions";
-import { PersistedItem } from "./Dynamo";
 import { TableProps } from "./Props";
 
 abstract class RequestQueue<R = any> {
@@ -64,7 +65,7 @@ export class BatchPutQueue<R> extends RequestQueue<R> {
   }
 
   protected createRequest(item: any): WriteRequest {
-    return { PutRequest: { Item: new PersistedItem(item) } };
+    return { PutRequest: { Item: toDynamoDBItem(item) } };
   }
 
   protected setMaxBatchSize(): void {
