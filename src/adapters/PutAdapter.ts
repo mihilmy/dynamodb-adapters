@@ -3,11 +3,12 @@ import { AWSError } from "aws-sdk/lib/error";
 import { TypedPathNode } from "typed-path";
 
 import { PutBuilder } from "../expressions/PutBuilder";
+import { fromDynamoItem, toDynamoDBItem } from "../utils";
 
 import { PutInput } from "../types/Expressions";
 import { TableProps } from "../types/Props";
 import { Adapter, ConditionalPutOperator } from "../types/Adapter";
-import { AttributeValueType, DynamoErrorCode, PersistedItem } from "../types/Dynamo";
+import { AttributeValueType, DynamoErrorCode } from "../types/Dynamo";
 
 export class PutAdapter<T> implements Adapter<T | false | undefined> {
   protected builder: PutBuilder<T>;
@@ -25,7 +26,7 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
 
     try {
       const { Attributes: oldItem } = await this.docClient.put(this.putExpression).promise();
-      return (oldItem as T) || undefined;
+      return fromDynamoItem<T>(oldItem);
     } catch (_error) {
       const error = _error as AWSError;
       // Swallow since this should not be treated as an error if the client configured an update expression
@@ -36,7 +37,7 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
   }
 
   put(item: T): PutAdapter<T> {
-    this.putExpression.Item = new PersistedItem(item);
+    this.putExpression.Item = toDynamoDBItem(item);
     return this;
   }
 
