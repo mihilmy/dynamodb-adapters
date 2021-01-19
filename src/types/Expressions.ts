@@ -62,6 +62,18 @@ export interface AttributeTypeCheck<T> extends BaseExpression<T> {
   type: AttributeValueType;
 }
 
+export interface SetActionInput<T> extends BaseExpression<T> {
+  valueType: "Path" | "Definite";
+  attrValue: any;
+}
+
+export interface AddActionInput<T> extends BaseExpression<T> {
+  attrValue: number | Set<string | number>;
+}
+
+export interface DeleteActionInput<T> extends BaseExpression<T> {
+  toRemove: Set<string | number>;
+}
 /******************************************************************************************************************************************
  *                                                     SIMPLE ATTRIBUTE MAP TYPES                                                         *
  ******************************************************************************************************************************************/

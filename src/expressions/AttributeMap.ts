@@ -1,3 +1,5 @@
+// @ts-ignore
+import DynamoDBSet from "aws-sdk/lib/dynamodb/set";
 import { TypedPathKey } from "typed-path";
 
 import { ExpressionNameMap, ExpressionValueMap, NameMap, ValueEntry, ValueMap, AttributePath } from "../types/Expressions";
@@ -17,6 +19,9 @@ export class AttributeMap {
 
   addValue(path: AttributePath<any>, attrValue: any) {
     if (attrValue === undefined || attrValue === null) return;
+
+    // Sets are treated as a special value by the SDK and they export a specific class to construct the `Set`
+    if (attrValue instanceof Set) attrValue = new DynamoDBSet([...attrValue], { validate: true });
 
     const pathString = typeof path === "string" ? path : path.$path;
     const mapKey = `${value(pathString)}${this.valueCounter++ || ""}`;
