@@ -63,8 +63,24 @@ export interface AttributeTypeCheck<T> extends BaseExpression<T> {
 }
 
 export interface SetActionInput<T> extends BaseExpression<T> {
-  valueType: "Path" | "Definite";
-  attrValue: any;
+  attrValue: TypedPathNode<T> | any;
+}
+
+export interface ListAppendInput<T> extends BaseExpression<T> {
+  list1: AttributePath<T> | Array<any>;
+  list2: AttributePath<T> | Array<any>;
+  position: "Start" | "End";
+}
+
+export interface ArithmeticInput<T> extends BaseExpression<T> {
+  operand1: AttributePath<T> | number;
+  operator: "+" | "-";
+  operand2: AttributePath<T> | number;
+}
+
+export interface IfNotExistsInput<T> extends BaseExpression<T> {
+  pathToCheck: AttributePath<T>;
+  attrValue: TypedPathNode<T> | any;
 }
 
 export interface AddActionInput<T> extends BaseExpression<T> {

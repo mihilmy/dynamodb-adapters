@@ -1,7 +1,7 @@
 import { ExpressionsBuilder } from "./Builder";
 
 import { TableProps } from "../types/Props";
-import { AddActionInput, BaseExpression, DeleteActionInput, SetActionInput, UpdateInput } from "../types/Expressions";
+import { AddActionInput, BaseExpression, DeleteActionInput, ListAppendInput, ArithmeticInput, IfNotExistsInput, SetActionInput, UpdateInput } from "../types/Expressions";
 
 export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
   private conditionalExpression: string[] = [];
@@ -16,12 +16,52 @@ export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
    * Use the SET action in an update expression to add one or more attributes to an item
    */
   useSetAction(input: SetActionInput<T>) {
-    //prettier-ignore
-    const valueKey = input.valueType === "Path" ?  this.attributeMap.addName(input.attrValue) : this.attributeMap.addValue(input.attrPath, input.attrValue);
+    const isPath = input.attrValue.$path && input.attrValue.$raw;
+    const valueKey = isPath ? this.attributeMap.addName(input.attrValue) : this.attributeMap.addValue(input.attrPath, input.attrValue);
 
     if (valueKey) {
       const pathKey = this.attributeMap.addName(input.attrPath);
-      this.updateExpression[pathKey] = new SetAction({ pathKey, valueKey });
+      this.updateExpression[pathKey] = new SetAction({ pathKey, value: valueKey });
+    }
+  }
+
+  /**
+   * Use the SET action in an update expression to add one or more attributes to an item
+   */
+  useListAppend(input: ListAppendInput<T>) {
+    const listKey1 = Array.isArray(input.list1) ? this.attributeMap.addValue(input.attrPath, input.list1) : this.attributeMap.addName(input.list1);
+    const listKey2 = Array.isArray(input.list2) ? this.attributeMap.addValue(input.attrPath, input.list2) : this.attributeMap.addName(input.list2);
+
+    if (listKey1 && listKey2) {
+      const pathKey = this.attributeMap.addName(input.attrPath);
+      this.updateExpression[pathKey] = new ListAppendFunction({ pathKey, list1: listKey1, list2: listKey2, position: input.position });
+    }
+  }
+
+  /**
+   * Uses the SET action to create an update expression using "+" or "-"
+   */
+  useIfNotExists(input: IfNotExistsInput<T>) {
+    const isPath = input.attrValue.$path && input.attrValue.$raw;
+    const valueKey = isPath ? this.attributeMap.addName(input.attrValue) : this.attributeMap.addValue(input.attrPath, input.attrValue);
+
+    if (valueKey) {
+      const pathKey = this.attributeMap.addName(input.attrPath);
+      const pathToCheck = this.attributeMap.addName(input.pathToCheck);
+      this.updateExpression[pathKey] = new IfNotExistsFunction({ pathKey, pathToCheck, value: valueKey });
+    }
+  }
+
+  /**
+   * Uses the SET action to create an update expression using "+" or "-"
+   */
+  useMath(input: ArithmeticInput<T>) {
+    const operand1 = typeof input.operand1 === "number" ? this.attributeMap.addValue(input.attrPath, input.operand1) : this.attributeMap.addName(input.operand1);
+    const operand2 = typeof input.operand2 === "number" ? this.attributeMap.addValue(input.attrPath, input.operand2) : this.attributeMap.addName(input.operand2);
+
+    if (operand1 && operand2) {
+      const pathKey = this.attributeMap.addName(input.attrPath);
+      this.updateExpression[pathKey] = new MathFunction({ pathKey, operand1, operator: input.operator, operand2 });
     }
   }
 
@@ -76,8 +116,27 @@ class SetAction implements Action {
   expr: string;
   type: "SET" = "SET";
 
-  constructor(input: { pathKey: string; valueKey: string }) {
-    this.expr = `${input.pathKey} = ${input.valueKey}`;
+  constructor(input: { pathKey: string; value: string }) {
+    this.expr = `${input.pathKey} = ${input.value}`;
+  }
+}
+
+class ListAppendFunction extends SetAction {
+  constructor(input: { pathKey: string; list1: string; list2: string; position: "Start" | "End" }) {
+    const params = input.position === "Start" ? `${input.list2}, ${input.list1}` : `${input.list1}, ${input.list2}`;
+    super({ pathKey: input.pathKey, value: `list_append(${params})` });
+  }
+}
+
+class MathFunction extends SetAction {
+  constructor(input: { pathKey: string; operand1: string; operator: "+" | "-"; operand2: string }) {
+    super({ pathKey: input.pathKey, value: `${input.operand1} ${input.operator} ${input.operand2}` });
+  }
+}
+
+class IfNotExistsFunction extends SetAction {
+  constructor(input: { pathKey: string; pathToCheck: string; value: string }) {
+    super({ pathKey: input.pathKey, value: `if_not_exists(${input.pathToCheck}, ${input.value})` });
   }
 }
 
