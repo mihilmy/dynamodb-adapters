@@ -6,8 +6,9 @@ import { TableProps } from "../src/types/Props";
 
 export class User {
   userId: string;
-  username!: string;
+  username: string;
   version: number;
+  skills: Set<"Java" | "Typescript">;
 
   constructor(user: Partial<User>) {
     this.userId = `user.id.${uuid()}`;
@@ -22,7 +23,7 @@ export class User {
 
 export const UserTableProps: TableProps<User, string> = {
   tableName: "Users",
-  partitionKey: { name: "userId", type: AttributeType.STRING },
+  partitionKey: { name: "userId", type: AttributeType.STRING }
 };
 
 export const $User = typedPath<User>();

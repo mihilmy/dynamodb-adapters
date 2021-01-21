@@ -9,7 +9,8 @@
     "outDir": "lib",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "keyofStringsOnly": true
+    "keyofStringsOnly": true,
+    "strictPropertyInitialization": false
   },
   "include": ["./src/**/*"]
 }

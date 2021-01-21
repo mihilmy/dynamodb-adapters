@@ -98,8 +98,21 @@ export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
 
   build(updateInput: UpdateInput) {
     const input = super.addCommonInputs<UpdateInput>(updateInput);
+    const updateGroups: Record<Action["type"], string[]> = { SET: [], ADD: [], REMOVE: [], DELETE: [] };
+
     if (this.conditionalExpression.length !== 0) {
       input.ConditionExpression = this.conditionalExpression.join(" ");
+    }
+
+    for (const { type, expr } of Object.values(this.updateExpression)) {
+      updateGroups[type].push(expr);
+    }
+
+    for (const [type, exprList] of Object.entries(updateGroups)) {
+      if (exprList.length !== 0) {
+        input.UpdateExpression ||= "";
+        input.UpdateExpression += `${type} ${exprList.join(", ")}\n`;
+      }
     }
 
     return input;
