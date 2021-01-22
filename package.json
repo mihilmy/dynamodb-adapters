@@ -2,8 +2,11 @@
   "name": "@mihilmy/dynamodb-adapters",
   "version": "0.0.0",
   "description": "A simpler way to write DynamoDB expressions",
-  "main": "index.js",
-  "scripts": {},
+  "main": "lib/adapter.js",
+  "scripts": {
+    "prepare": "tsc",
+    "test": "jest"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/mihilmy/dynamodb-adapters.git"
@@ -35,5 +38,8 @@
   "peerDependencies": {
     "aws-sdk": "2.x",
     "typed-path": "2.0.x"
-  }
+  },
+  "files": [
+    "lib"
+  ]
 }
