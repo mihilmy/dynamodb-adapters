@@ -1,4 +1,4 @@
-import { BatchWriteItemRequestMap, DocumentClient, Key, KeysAndAttributes, PutRequest, WriteRequest } from "aws-sdk/clients/dynamodb";
+import { DocumentClient } from "aws-sdk/clients/dynamodb";
 
 import { PutAdapter } from "./PutAdapter";
 
