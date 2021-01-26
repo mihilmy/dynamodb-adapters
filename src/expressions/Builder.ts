@@ -1,17 +1,7 @@
 import { TypedPathNode } from "typed-path";
 import { AttributeMap } from "./AttributeMap";
 import { GlobalIndex, LocalIndex, TableProps } from "../types/Props";
-import {
-  ComparisonExpressionInput,
-  ExistenceCheckerInput,
-  BeginsWithInput,
-  BetweenInput,
-  ContainsInput,
-  AttributeTypeCheck,
-  InListInput,
-  ConditionalOperator,
-  CommonInput,
-} from "../types/Expressions";
+import { ComparisonExpressionInput, ExistenceCheckerInput, BeginsWithInput, BetweenInput, ContainsInput, AttributeTypeCheck, InListInput, ConditionalOperator, CommonInput } from "../types/Expressions";
 
 export abstract class ExpressionsBuilder<T> {
   private partitionKeyName: keyof T;
@@ -129,8 +119,9 @@ export abstract class ExpressionsBuilder<T> {
 
   addCommonInputs<R>(baseInput: any) {
     const result: Partial<CommonInput> = { ...baseInput };
-    const expressionAttributeNames = this.attributeMap.toExpressionAttributeNames();
-    const expressionAttributeValues = this.attributeMap.toExpressionAttributeValues();
+    const expressionsList = [result.ConditionExpression, result.FilterExpression, result.ProjectionExpression, result.UpdateExpression, result.KeyConditionExpression];
+    const expressionAttributeNames = this.attributeMap.toExpressionAttributeNames(expressionsList);
+    const expressionAttributeValues = this.attributeMap.toExpressionAttributeValues(expressionsList);
 
     if (expressionAttributeNames) result.ExpressionAttributeNames = expressionAttributeNames;
     if (expressionAttributeValues) result.ExpressionAttributeValues = expressionAttributeValues;

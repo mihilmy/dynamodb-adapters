@@ -3,6 +3,7 @@ import DynamoDBSet from "aws-sdk/lib/dynamodb/set";
 import { TypedPathKey } from "typed-path";
 
 import { ExpressionNameMap, ExpressionValueMap, NameMap, ValueEntry, ValueMap, AttributePath } from "../types/Expressions";
+import { Optional } from "../types/Common";
 
 const ATTRIBUTE_NAME_TOKEN = "#";
 const ATTRIBUTE_VALUE_TOKEN = ":";
@@ -29,28 +30,34 @@ export class AttributeMap {
     return mapKey;
   }
 
-  toExpressionAttributeNames(): ExpressionNameMap | undefined {
+  toExpressionAttributeNames(expressions: Optional<string>[] = []): ExpressionNameMap | undefined {
     const nameMap: ExpressionNameMap = {};
     const nameMapObjects = Object.values(this.nameMap);
     if (nameMapObjects.length === 0) return undefined;
 
+    // Build a unique token set using the expression attribute value placeholder
+    const tokens = new Set<string>(expressions.flatMap((expr) => expr?.match(/#\w+/g) || []));
     for (const { mapKey, attrName } of nameMapObjects) {
-      nameMap[mapKey] = attrName as string;
+      // Only add the map key if it exists in the expression
+      if (tokens.has(mapKey)) nameMap[mapKey] = attrName;
     }
 
-    return nameMap;
+    return Object.keys(nameMap).length > 0 ? nameMap : undefined;
   }
 
-  toExpressionAttributeValues(): ExpressionValueMap | undefined {
+  toExpressionAttributeValues(expressions: Optional<string>[] = []): ExpressionValueMap | undefined {
     const valueMap: ExpressionNameMap = {};
     const valueMapObjects = Object.values(this.valueMap) as ValueEntry[];
     if (valueMapObjects.length === 0) return undefined;
 
+    // Build a unique token set using the expression attribute value placeholder
+    const tokens = new Set<string>(expressions.flatMap((expr) => expr?.match(/:\w+/g) || []));
     for (const { mapKey, attrValue } of valueMapObjects) {
-      valueMap[mapKey] = attrValue;
+      // Only add the map key if it exists in the expression
+      if (tokens.has(mapKey)) valueMap[mapKey] = attrValue;
     }
 
-    return valueMap;
+    return Object.keys(valueMap).length > 0 ? valueMap : undefined;
   }
 
   private addNameEntry(entry: TypedPathKey) {

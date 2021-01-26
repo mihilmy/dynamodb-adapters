@@ -15,11 +15,11 @@ export class PutBuilder<T> extends ExpressionsBuilder<T> {
   }
 
   build(putInput: PutInput) {
-    const input = super.addCommonInputs<PutInput>(putInput);
+    const input = { ...putInput };
     if (this.hasExpression()) {
       input.ConditionExpression = this.conditionalPutExpression.join(" ");
     }
 
-    return input;
+    return super.addCommonInputs<PutInput>(input);
   }
 }
