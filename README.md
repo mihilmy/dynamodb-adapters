@@ -54,6 +54,10 @@ const updateExpression = {
 };
 ```
 
+The library attempts to provide convenience when possible for example supporting path updates which is not directly supported by DynamoDB but
+can be supported client side by implementing a path level traversal algorithm. The main tenant of the library is to assist in building the
+expression using as least code as possible, its not responsible for the correctness of your expression.
+
 ## Infrastructure As Code
 
 With the rise of cloudformation creating a templated way to manage infrastructure and the increase in CDK usage to generate the

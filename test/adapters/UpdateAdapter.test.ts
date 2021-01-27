@@ -1,6 +1,6 @@
 import { UpdateAdapter } from "../../src/adapters/UpdateAdapter";
 
-import { DocClient } from "../TestSetup";
+import { DocClient, UsersTable } from "../TestSetup";
 import { User, UserTableProps, $User } from "../TestData";
 
 test("T1: Conditional Update Regression", async () => {
@@ -26,4 +26,55 @@ test("T2: Validate that unused variables are deleted", async () => {
   // Simple case of storing a new user
   const result1 = await new UpdateAdapter<User>(DocClient, UserTableProps).update(user1).if("version", "DoesNotExist").update(user2).call();
   expect(result1).toBeUndefined();
+});
+
+test("T3: Complex operations on items", async () => {
+  const user = new User({ username: "omar" });
+  // Simple case of storing a new user
+  await new UpdateAdapter<User>(DocClient, UserTableProps).update(user).call();
+  const result1 = await UsersTable.get(user.userId);
+  expect(result1).toEqual(user);
+
+  // Set once
+  await new UpdateAdapter<User>(DocClient, UserTableProps).update({ userId: user.userId }).once("createdAt", new Date().toISOString()).call();
+  const result2 = await UsersTable.get(user.userId);
+  expect(result2.createdAt).toEqual(user.createdAt);
+
+  // Append to a set
+  await new UpdateAdapter<User>(DocClient, UserTableProps)
+    .update({ userId: user.userId })
+    .append("skills", new Set(["Java", "Typescript"]))
+    .call();
+  const result3 = await UsersTable.get(user.userId);
+  expect(result3.skills.values).toEqual(["Java", "Typescript"]);
+
+  // Append to a list
+  await new UpdateAdapter<User>(DocClient, UserTableProps)
+    .update({ userId: user.userId })
+    .append("locations", [{ country: "Egypt", city: "Cairo", votes: 0, years: 0 }])
+    .call();
+  const result4 = await UsersTable.get(user.userId);
+  expect(result4.locations[0].votes).toEqual(0);
+
+  // Validate adding number to a nested value
+  await new UpdateAdapter<User>(DocClient, UserTableProps).update({ userId: user.userId }).addNumber($User.locations[0].votes, 1).addNumber("version", 1).call();
+  const result5 = await UsersTable.get(user.userId);
+  expect(result5.locations[0].votes).toEqual(1);
+  expect(result5.version).toEqual(2);
+
+  // Deleting from a path
+  await new UpdateAdapter<User>(DocClient, UserTableProps).update({ userId: user.userId }).delete($User.locations[0].votes).call();
+
+  // Deleting from list
+  await new UpdateAdapter<User>(DocClient, UserTableProps).update({ userId: user.userId }).delete($User.locations[0]).call();
+  const result6 = await UsersTable.get(user.userId);
+  expect(result6.locations).toHaveLength(0);
+
+  // Deleting from a set
+  await new UpdateAdapter<User>(DocClient, UserTableProps)
+    .update({ userId: user.userId })
+    .delete($User.skills, new Set(["Java"]))
+    .call();
+  const result7 = await UsersTable.get(user.userId);
+  expect(result7.skills.values).toEqual(["Typescript"]);
 });

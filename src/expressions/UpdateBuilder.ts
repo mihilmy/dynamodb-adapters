@@ -110,8 +110,11 @@ export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
 
     for (const [type, exprList] of Object.entries(updateGroups)) {
       if (exprList.length !== 0) {
-        input.UpdateExpression ||= "";
-        input.UpdateExpression += `${type} ${exprList.join(", ")}\n`;
+        if (input.UpdateExpression) {
+          input.UpdateExpression += `\n${type} ${exprList.join(", ")}`;
+        } else {
+          input.UpdateExpression = `${type} ${exprList.join(", ")}`;
+        }
       }
     }
 

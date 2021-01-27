@@ -9,13 +9,17 @@ export class User {
   username: string;
   version: number;
   skills: Set<"Java" | "Typescript">;
+  createdAt: string;
+  locations: { country: string; city: string; votes: number; years: number }[];
 
   constructor(user: Partial<User>) {
     this.userId = `user.id.${uuid()}`;
     this.version = 1;
+    this.createdAt = new Date().toISOString();
+    this.locations = [];
 
     for (const override of Object.keys(user)) {
-      //@ts-ignore
+      //@ts-ignores
       this[override] = user[override];
     }
   }

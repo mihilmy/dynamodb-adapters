@@ -14,8 +14,20 @@ export class AttributeMap {
   private valueCounter: number = 0;
 
   addName(path: AttributePath<any>) {
-    const pathList = typeof path === "string" ? [path] : path.$raw;
-    return pathList.map((entry) => this.addNameEntry(entry)).join(".");
+    const pathList = typeof path === "string" ? [path] : path.$rawPath;
+    let pathExpr = "";
+
+    for (const entry of pathList) {
+      if (!pathExpr) {
+        pathExpr = this.addNameEntry(entry);
+      } else if (typeof entry === "number") {
+        pathExpr += `[${entry}]`;
+      } else {
+        pathExpr += `.${entry.toString()}`;
+      }
+    }
+
+    return pathExpr;
   }
 
   addValue(path: AttributePath<any>, attrValue: any) {
@@ -24,8 +36,10 @@ export class AttributeMap {
     // Sets are treated as a special value by the SDK and they export a specific class to construct the `Set`
     if (attrValue instanceof Set) attrValue = new DynamoDBSet([...attrValue], { validate: true });
 
-    const pathString = typeof path === "string" ? path : path.$path;
-    const mapKey = `${value(pathString)}${this.valueCounter++ || ""}`;
+    // Use the mapping technique below instead for a more readable expression during debugging
+    // const pathString = typeof path === "string" ? path : path.$path;
+    // const alphaNumericPath = pathString.replace(/[\[\]]/g, "").replace(/\./g, "_");
+    const mapKey = `${value("v")}${this.valueCounter++}`;
     this.valueMap[mapKey] = { mapKey, attrValue };
     return mapKey;
   }

@@ -2,7 +2,7 @@ import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { AWSError } from "aws-sdk/lib/error";
 
 import { UpdateBuilder } from "../expressions/UpdateBuilder";
-import { fromDynamoItem } from "../utils";
+import { fromDynamoItem, toPath } from "../utils";
 
 import { AttributePath, UpdateInput } from "../types/Expressions";
 import { TableProps } from "../types/Props";
@@ -47,6 +47,46 @@ export class UpdateAdapter<T> implements Adapter<T | false | undefined> {
         this.builder.useSetAction({ attrPath: attrKey as keyof T, attrValue });
       }
     }
+
+    return this;
+  }
+
+  once(attrPath: AttributePath<T>, value: any) {
+    this.builder.useIfNotExists({ attrPath, pathToCheck: attrPath, attrValue: value });
+    return this;
+  }
+
+  append(attrPath: AttributePath<T>, values: Set<string | number> | Array<any>, position: "Start" | "End" = "End") {
+    if (values instanceof Set) {
+      this.builder.useAddAction({ attrPath, attrValue: values });
+    }
+
+    if (Array.isArray(values)) {
+      this.builder.useListAppend({ attrPath, list1: attrPath, list2: values, position });
+    }
+
+    return this;
+  }
+
+  addNumber(attrPath: AttributePath<T>, value: number | AttributePath<T>) {
+    const pathLength = toPath(attrPath, "list").length;
+
+    if (pathLength === 1 && typeof value === "number") {
+      this.builder.useAddAction({ attrPath, attrValue: value });
+    } else {
+      this.builder.useMath({ attrPath, operand1: attrPath, operator: "+", operand2: value });
+    }
+
+    return this;
+  }
+
+  delete(attrPath: AttributePath<T>, values?: Set<string | number>) {
+    if (values instanceof Set) {
+      this.builder.useDeleteAction({ attrPath, toRemove: values });
+    } else {
+      this.builder.useRemoveAction({ attrPath });
+    }
+
     return this;
   }
 
