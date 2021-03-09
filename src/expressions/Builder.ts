@@ -1,6 +1,6 @@
-import { TypedPathNode } from "typed-path";
 import { AttributeMap } from "./AttributeMap";
 import { GlobalIndex, LocalIndex, TableProps } from "../types/Props";
+import { AttributePath, TypedPathNode } from "../types/Expressions";
 import { ComparisonExpressionInput, ExistenceCheckerInput, BeginsWithInput, BetweenInput, ContainsInput, AttributeTypeCheck, InListInput, ConditionalOperator, CommonInput } from "../types/Expressions";
 
 export abstract class ExpressionsBuilder<T> {
@@ -12,7 +12,7 @@ export abstract class ExpressionsBuilder<T> {
   private conditionalOperator: ConditionalOperator = "AND";
 
   // Only available for Get/BatchGet/Query/Scan
-  private projectedSet: Set<string> = new Set();
+  protected projectedSet: Set<string> = new Set();
   // Used to determine the current list to populate
   protected currentExpressionList!: string[];
 
@@ -72,10 +72,10 @@ export abstract class ExpressionsBuilder<T> {
    *
    * @param selectedPaths item paths stored
    */
-  projectAttributes(selectedPaths: TypedPathNode<T>[]) {
+  projectAttributes(selectedPaths: AttributePath<T>[]) {
     for (const path of selectedPaths) {
-      this.projectedSet.add(path.$path);
-      this.attributeMap.addName(path);
+      const pathExpression = this.attributeMap.addName(path);
+      this.projectedSet.add(pathExpression);
     }
   }
 
@@ -100,7 +100,6 @@ export abstract class ExpressionsBuilder<T> {
     }
   }
 
-  //@ts-ignore
   private isKeyCondition(attrName: keyof T) {
     return [this.partitionKeyName, this.sortKeyName].includes(attrName);
   }

@@ -30,6 +30,7 @@
     "@types/node": "^12.19.11",
     "aws-sdk": "^2.817.0",
     "jest": "^26.6.3",
+    "prettier": "^2.2.1",
     "short-uuid": "^4.1.0",
     "ts-jest": "^26.4.4",
     "typed-path": "^2.2.1",

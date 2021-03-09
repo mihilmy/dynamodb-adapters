@@ -1,5 +1,5 @@
 export enum DynamoErrorCode {
-  CCF = "ConditionalCheckFailedException",
+  CCF = "ConditionalCheckFailedException"
 }
 
 export enum AttributeValueType {
@@ -11,11 +11,13 @@ export enum AttributeValueType {
   BinarySet = "BS",
   Boolean = "BOOL",
   Null = "NULL",
-  List = "L",
+  List = "L"
 }
 
 export enum DynamoSetType {
   String = "String",
   Number = "Number",
-  Binary = "Binary",
+  Binary = "Binary"
 }
+
+export type Key = string | number | Buffer;
