@@ -11,6 +11,7 @@ export class User {
   skills: Set<"Java" | "Typescript">;
   createdAt: string;
   locations: { country: string; city: string; votes: number; years: number }[];
+  connections: Record<string, User>;
 
   constructor(user: Partial<User>) {
     this.userId = `user.id.${uuid()}`;

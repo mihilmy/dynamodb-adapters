@@ -26,6 +26,7 @@ export type ExpressionValueMap = DocumentClient.ExpressionAttributeValueMap;
 export type ConditionalOperator = "AND" | "OR";
 export type ComparisonOperator = "=" | "<>" | ">" | ">=" | "<" | "<=";
 export type SortOrder = "ASC" | "DESC";
+export type UpdateActionType = "SET" | "ADD" | "REMOVE" | "DELETE";
 export type AttributePath<T> = TypedPathNode | keyof T;
 export type TypedPathNode = {
   $path: string;
@@ -68,6 +69,7 @@ export interface AttributeTypeCheck<T> extends BaseExpression<T> {
 
 export interface SetActionInput<T> extends BaseExpression<T> {
   attrValue: TypedPathNode | any;
+  shiftRequested?: boolean;
 }
 
 export interface ListAppendInput<T> extends BaseExpression<T> {

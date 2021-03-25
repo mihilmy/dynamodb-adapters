@@ -1,3 +1,5 @@
+import { uuid } from "short-uuid";
+
 import { UpdateAdapter } from "../../src/adapters/UpdateAdapter";
 
 import { DocClient, UsersTable } from "../TestSetup";
@@ -77,4 +79,26 @@ test("T3: Complex operations on items", async () => {
     .call();
   const result7 = await UsersTable.get(user.userId);
   expect(result7.skills.values).toEqual(["Typescript"]);
+});
+
+test("T4: Testing partial path updates", async () => {
+  const user = new User({ username: "omar", version: 1 });
+  const connectionId = `connectionId.${uuid()}`;
+
+  // Asserts that we are able to update a deeply nested path
+  // prettier-ignore
+  await new UpdateAdapter<User>(DocClient, UserTableProps)
+    .update(user)
+    .updatePath($User.connections[connectionId].username, "gualtiero", true)
+    .call();
+  const result = await UsersTable.get(user.userId);
+  expect(result.connections[connectionId].username).toEqual("gualtiero");
+
+  // Asserts that for an existing path the update works on first try
+  await new UpdateAdapter<User>(DocClient, UserTableProps)
+    .update({ userId: user.userId })
+    .updatePath($User.connections[connectionId].skills, new Set(["Java"]), true)
+    .call();
+  const result2 = await UsersTable.get(user.userId);
+  expect(result2.connections[connectionId].skills.values).toContain("Java");
 });

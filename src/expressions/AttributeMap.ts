@@ -2,7 +2,7 @@
 import DynamoDBSet from "aws-sdk/lib/dynamodb/set";
 import { TypedPathKey } from "typed-path";
 
-import { ExpressionNameMap, ExpressionValueMap, NameMap, ValueEntry, ValueMap, AttributePath } from "../types/Expressions";
+import { AttributePath, ExpressionNameMap, ExpressionValueMap, NameMap, ValueEntry, ValueMap } from "../types/Expressions";
 import { Optional } from "../types/Common";
 
 const ATTRIBUTE_NAME_TOKEN = "#";
@@ -23,7 +23,7 @@ export class AttributeMap {
       } else if (typeof entry === "number") {
         pathExpr += `[${entry}]`;
       } else {
-        pathExpr += `.${entry.toString()}`;
+        pathExpr += `.${this.addNameEntry(entry)}`;
       }
     }
 
@@ -31,7 +31,7 @@ export class AttributeMap {
   }
 
   addValue(path: AttributePath<any>, attrValue: any) {
-    if (attrValue === undefined || attrValue === null) return;
+    if (attrValue === undefined) return;
 
     // Sets are treated as a special value by the SDK and they export a specific class to construct the `Set`
     if (attrValue instanceof Set) attrValue = new DynamoDBSet([...attrValue], { validate: true });
@@ -83,7 +83,7 @@ export class AttributeMap {
 }
 
 export function name(attrName: string) {
-  return `${ATTRIBUTE_NAME_TOKEN}${attrName}`;
+  return `${ATTRIBUTE_NAME_TOKEN}${attrName.replace(/\W/g, "")}`;
 }
 
 export function value(attrName: string) {
