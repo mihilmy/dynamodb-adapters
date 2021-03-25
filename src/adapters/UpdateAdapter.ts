@@ -7,7 +7,9 @@ import { fromDynamoItem, toPath } from "../utils";
 import { AttributePath, UpdateInput } from "../types/Expressions";
 import { TableProps } from "../types/Props";
 import { Adapter, ConditionalPutOperator } from "../types/Adapter";
-import { AttributeValueType, DynamoErrorCode } from "../types/Dynamo";
+import { AttributeValueType, DynamoDBErrorMessage, DynamoErrorCode } from "../types/Dynamo";
+import { PathExpression } from "../types/Path";
+import { TypedPathKey } from "typed-path";
 
 export class UpdateAdapter<T> implements Adapter<T | false | undefined> {
   protected builder: UpdateBuilder<T>;
@@ -18,7 +20,7 @@ export class UpdateAdapter<T> implements Adapter<T | false | undefined> {
     this.updateInput = { TableName: tableProps.tableName, ReturnValues: "ALL_OLD", Key: {} } as UpdateInput;
   }
 
-  async call() {
+  async call(): Promise<any> {
     // NOTE: Builder actually copies the expression into a new object
     this.updateInput = this.builder.build(this.updateInput);
     console.debug(this.updateInput);
@@ -31,21 +33,50 @@ export class UpdateAdapter<T> implements Adapter<T | false | undefined> {
       // Swallow since this should not be treated as an error if the client configured an update expression
       if (error.code === DynamoErrorCode.CCF) return false;
 
+      // Specific edge case when we are updating nested paths within JSON documents which DynamoDB
+      if (error.code === DynamoErrorCode.Validation && error.message === DynamoDBErrorMessage.InvalidUpdatePath) {
+        this.builder.shiftPathUpdatesOneLevelUp();
+        return this.call();
+      }
+
       throw error;
     }
   }
 
   update(item: Partial<T>): UpdateAdapter<T> {
+    for (const [attrKey, attrValue] of Object.entries(item)) {
+      const path = attrKey as keyof T;
+      this.updatePath(path, attrValue);
+    }
+
+    return this;
+  }
+
+  updatePath(path: AttributePath<T>, value: any) {
+    // Simple case if its a plain string path
+    if (typeof path === "string") {
+      return this.updateAttribute(path, value);
+    }
+
+    // Simple case if its a path with a single entry
+    if (path.$rawPath.length === 1) {
+      return this.updateAttribute(path.$rawPath[0], value);
+    }
+
+    // More complex case for nested path updates builder will be handling building expressions
+    this.builder.useSetAction({ attrPath: path, attrValue: value });
+    return this;
+  }
+
+  private updateAttribute(attrName: TypedPathKey, attrValue: any) {
     const partitionKeyName = this.tableProps.partitionKey["name"];
     const sortKeyName = this.tableProps.sortKey?.["name"];
+    const attrPath = attrName.toString() as keyof T;
 
-    for (const [attrKey, attrValue] of Object.entries(item)) {
-      // Add the tables primary keys to the Key object instead of the update expression
-      if (partitionKeyName === attrKey || sortKeyName === attrKey) {
-        this.updateInput.Key[attrKey] = attrValue;
-      } else {
-        this.builder.useSetAction({ attrPath: attrKey as keyof T, attrValue });
-      }
+    if (partitionKeyName === attrName || sortKeyName === attrName) {
+      this.updateInput.Key[attrPath] = attrValue;
+    } else {
+      this.builder.useSetAction({ attrPath, attrValue });
     }
 
     return this;

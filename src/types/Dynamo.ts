@@ -1,5 +1,10 @@
 export enum DynamoErrorCode {
-  CCF = "ConditionalCheckFailedException"
+  CCF = "ConditionalCheckFailedException",
+  Validation = "ValidationException"
+}
+
+export enum DynamoDBErrorMessage {
+  InvalidUpdatePath = "The document path provided in the update expression is invalid for update"
 }
 
 export enum AttributeValueType {

@@ -1,7 +1,18 @@
 import { ExpressionsBuilder } from "./Builder";
 
 import { TableProps } from "../types/Props";
-import { AddActionInput, BaseExpression, DeleteActionInput, ListAppendInput, ArithmeticInput, IfNotExistsInput, SetActionInput, UpdateInput } from "../types/Expressions";
+import {
+  AddActionInput,
+  BaseExpression,
+  DeleteActionInput,
+  ListAppendInput,
+  ArithmeticInput,
+  IfNotExistsInput,
+  SetActionInput,
+  UpdateInput,
+  AttributePath
+} from "../types/Expressions";
+import { PathExpression } from "../types/Path";
 
 export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
   private conditionalExpression: string[] = [];
@@ -16,12 +27,12 @@ export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
    * Use the SET action in an update expression to add one or more attributes to an item
    */
   useSetAction(input: SetActionInput<T>) {
-    const isPath = input.attrValue.$path && input.attrValue.$raw;
+    const isPath = input.attrValue.$path && input.attrValue.$rawPath;
     const valueKey = isPath ? this.attributeMap.addName(input.attrValue) : this.attributeMap.addValue(input.attrPath, input.attrValue);
 
     if (valueKey) {
       const pathKey = this.attributeMap.addName(input.attrPath);
-      this.updateExpression[pathKey] = new SetAction({ pathKey, value: valueKey });
+      this.updateExpression[pathKey] = new SetAction({ pathKey, value: valueKey, nestedPath:  });
     }
   }
 
@@ -96,6 +107,11 @@ export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
     }
   }
 
+  /**
+   * Shifts all the paths one level up this may not be desired, see locks for better support
+   */
+  shiftPathUpdatesOneLevelUp() {}
+
   build(updateInput: UpdateInput) {
     const input = { ...updateInput };
     const updateGroups: Record<Action["type"], string[]> = { SET: [], ADD: [], REMOVE: [], DELETE: [] };
@@ -124,7 +140,6 @@ export class UpdateBuilder<T> extends ExpressionsBuilder<T> {
 
 interface Action {
   expr: string;
-  // rawPath: TypedPathKey[];
   type: "SET" | "REMOVE" | "ADD" | "DELETE";
 }
 
@@ -132,7 +147,7 @@ class SetAction implements Action {
   expr: string;
   type: "SET" = "SET";
 
-  constructor(input: { pathKey: string; value: string }) {
+  constructor(input: { pathKey: string; value: string; pathNode?: AttributePath<any> }) {
     this.expr = `${input.pathKey} = ${input.value}`;
   }
 }
