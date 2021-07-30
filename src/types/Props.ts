@@ -38,13 +38,10 @@ export interface LocalIndex<DataType, IndexName extends string> extends CDK.Loca
  * Adaptive attribute forcing the name of the attributes based on the data model
  */
 export interface Attribute<T> extends CDK.Attribute {
-  name: keyof T;
+  name: Extract<keyof T, string>;
 }
 
-export type IndexMap<IndexName extends string, DataType> = Record<
-  IndexName,
-  GlobalIndex<DataType, IndexName> | LocalIndex<DataType, IndexName>
->;
+export type IndexMap<IndexName extends string, DataType> = Record<IndexName, GlobalIndex<DataType, IndexName> | LocalIndex<DataType, IndexName>>;
 
 /******************************************************************************************************************************************
  *                                                       CDK TO SDK TYPE EXTENSIONS                                                       *
