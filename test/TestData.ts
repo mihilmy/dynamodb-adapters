@@ -35,7 +35,6 @@ export class Music {
   createdAt: string;
 
   constructor(music: Partial<Music>) {
-    this.artist = music.artist;
     this.createdAt = new Date().toISOString();
 
     for (const override of Object.keys(music)) {
