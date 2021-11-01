@@ -26,9 +26,34 @@ export class User {
   }
 }
 
+export class Music {
+  artist: string;
+  songTitle: string;
+  year: number;
+  genre: string;
+  rating: number;
+  createdAt: string;
+
+  constructor(music: Partial<Music>) {
+    this.artist = music.artist;
+    this.createdAt = new Date().toISOString();
+
+    for (const override of Object.keys(music)) {
+      //@ts-ignores
+      this[override] = music[override];
+    }
+  }
+}
+
 export const UserTableProps: TableProps<User, string> = {
   tableName: "Users",
   partitionKey: { name: "userId", type: AttributeType.STRING }
+};
+
+export const MusicTableProps: TableProps<Music, string> = {
+  tableName: "Music",
+  partitionKey: { name: "artist", type: AttributeType.STRING },
+  sortKey: { name: "songTitle", type: AttributeType.STRING }
 };
 
 export const $User = typedPath<User>();

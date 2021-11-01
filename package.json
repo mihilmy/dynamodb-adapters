@@ -1,6 +1,6 @@
 {
   "name": "@mihilmy/dynamodb-adapters",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A simpler way to write DynamoDB expressions",
   "main": "lib/index.js",
   "scripts": {
@@ -27,6 +27,7 @@
   "devDependencies": {
     "@aws-cdk/aws-dynamodb": "^1.80.0",
     "@shelf/jest-dynamodb": "^1.7.0",
+    "@types/jest": "^26.0.24",
     "@types/node": "^12.19.11",
     "aws-sdk": "^2.817.0",
     "jest": "^26.6.3",
@@ -43,5 +44,6 @@
   },
   "files": [
     "lib"
-  ]
+  ],
+  "dependencies": {}
 }

@@ -19,6 +19,7 @@ export class GetAdapter<T> implements Adapter<T | undefined> {
 
   async call(): Promise<T | undefined> {
     const getInput = this.builder.build(this.getInput);
+    console.debug(getInput);
     const { Item } = await this.docClient.get(getInput).promise();
     return fromDynamoItem<T>(Item);
   }

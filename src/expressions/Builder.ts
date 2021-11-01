@@ -15,6 +15,8 @@ export abstract class ExpressionsBuilder<T> {
   protected projectedSet: Set<string> = new Set();
   // Used to determine the current list to populate
   protected currentExpressionList!: string[];
+  // Used to limit the number of items retruned from a Query or Scan
+  protected limit: number;
 
   constructor(private tableProps: TableProps<T, string>) {
     this.partitionKeyName = tableProps.partitionKey.name;
@@ -79,6 +81,10 @@ export abstract class ExpressionsBuilder<T> {
     }
   }
 
+  setResultLimit(limit: number) {
+    this.limit = limit;
+  }
+
   useIndexKeys(indexName: string) {
     if (!this.tableProps.indexMap?.[indexName]) {
       throw new Error("Index name has not been defined in tableProps.indexMap configuration");
@@ -100,11 +106,11 @@ export abstract class ExpressionsBuilder<T> {
     }
   }
 
-  private isKeyCondition(attrName: keyof T) {
+  protected isKeyCondition(attrName: keyof T) {
     return [this.partitionKeyName, this.sortKeyName].includes(attrName);
   }
 
-  private addExpression(newExpression: string) {
+  protected addExpression(newExpression: string) {
     const length = this.currentExpressionList.length;
     if (length === 0) {
       this.currentExpressionList.push(newExpression);
@@ -116,15 +122,20 @@ export abstract class ExpressionsBuilder<T> {
     return this;
   }
 
-  addCommonInputs<R>(baseInput: any) {
+  protected addCommonInputs<R>(baseInput: R) {
     const result: Partial<CommonInput> = { ...baseInput };
+    // Add any common expressions BEFORE committing the attribute names and values
+    if (this.limit) result.Limit = this.limit;
+    if (this.projectedSet.size > 0) result.ProjectionExpression = [...this.projectedSet].join(",");
+
+    // Addd the attribute names and values AFTER the expressions have been added
     const expressionsList = [result.ConditionExpression, result.FilterExpression, result.ProjectionExpression, result.UpdateExpression, result.KeyConditionExpression];
     const expressionAttributeNames = this.attributeMap.toExpressionAttributeNames(expressionsList);
     const expressionAttributeValues = this.attributeMap.toExpressionAttributeValues(expressionsList);
 
     if (expressionAttributeNames) result.ExpressionAttributeNames = expressionAttributeNames;
     if (expressionAttributeValues) result.ExpressionAttributeValues = expressionAttributeValues;
-
+    
     return result as R;
   }
 }
