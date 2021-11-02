@@ -31,16 +31,17 @@ export class QueryAdapter<T> implements Adapter<T[]> {
   }
 
   query(partitionKey: any, sortKey?: any) {
-    this.andIf(this.tableProps.partitionKey.name, "=", partitionKey);
+    this.andIf(this.builder.partitionKeyName, "=", partitionKey);
 
     if (sortKey) {
-      this.andIf(this.tableProps.sortKey?.name as any, "=", sortKey);
+      this.andIf(this.builder.sortKeyName as any, "=", sortKey);
     }
 
     return this;
   }
 
   queryIndex<I extends string>(index: I, partitionKey: any, sortKey?: any) {
+    this.queryInput.IndexName = index;
     this.builder.useIndexKeys(index);
 
     return this.query(partitionKey, sortKey);

@@ -4,8 +4,8 @@ import { AttributePath, TypedPathNode } from "../types/Expressions";
 import { ComparisonExpressionInput, ExistenceCheckerInput, BeginsWithInput, BetweenInput, ContainsInput, AttributeTypeCheck, InListInput, ConditionalOperator, CommonInput } from "../types/Expressions";
 
 export abstract class ExpressionsBuilder<T> {
-  private partitionKeyName: keyof T;
-  private sortKeyName?: keyof T;
+  public partitionKeyName: keyof T;
+  public sortKeyName?: keyof T;
 
   // Common attribute map used by all expressions and building expressions
   protected attributeMap: AttributeMap = new AttributeMap();
