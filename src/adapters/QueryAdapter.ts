@@ -5,11 +5,11 @@ import { AttributeValueType } from "../types/Dynamo";
 import { TableProps } from "../types/Props";
 import { Adapter, ConditionalPutOperator } from "../types/Adapter";
 
-export class QueryAdapter<T> implements Adapter<T[]> {
+export class QueryAdapter<T, I extends string> implements Adapter<T[]> {
   private builder: QueryBuilder<T>;
   private queryInput: QueryInput;
 
-  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, string>) {
+  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, I>) {
     this.builder = new QueryBuilder(tableProps);
     this.queryInput = { TableName: tableProps.tableName } as QueryInput;
   }
@@ -40,20 +40,20 @@ export class QueryAdapter<T> implements Adapter<T[]> {
     return this;
   }
 
-  queryIndex<I extends string>(index: I, partitionKey: any, sortKey?: any) {
+  queryIndex(index: I, partitionKey: any, sortKey?: any) {
     this.queryInput.IndexName = index;
     this.builder.useIndexKeys(index);
 
     return this.query(partitionKey, sortKey);
   }
 
-  if(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): QueryAdapter<T>;
-  if(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): QueryAdapter<T>;
-  if(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): QueryAdapter<T>;
-  if(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): QueryAdapter<T>;
-  if(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): QueryAdapter<T>;
-  if(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T>;
-  if(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T> {
+  if(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): QueryAdapter<T, I>;
+  if(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): QueryAdapter<T, I>;
+  if(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): QueryAdapter<T, I>;
+  if(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): QueryAdapter<T, I>;
+  if(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): QueryAdapter<T, I>;
+  if(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T, I>;
+  if(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T, I> {
     // In case the condition is on a sort key, we adjust the expression list to use the
     this.builder.setExpressionList(attrPath);
     switch (operator) {
@@ -89,25 +89,25 @@ export class QueryAdapter<T> implements Adapter<T[]> {
     return this;
   }
 
-  andIf(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): QueryAdapter<T>;
-  andIf(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): QueryAdapter<T>;
-  andIf(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): QueryAdapter<T>;
-  andIf(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): QueryAdapter<T>;
-  andIf(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): QueryAdapter<T>;
-  andIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T>;
-  andIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T> {
+  andIf(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): QueryAdapter<T, I>;
+  andIf(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): QueryAdapter<T, I>;
+  andIf(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): QueryAdapter<T, I>;
+  andIf(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): QueryAdapter<T, I>;
+  andIf(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): QueryAdapter<T, I>;
+  andIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T, I>;
+  andIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T, I> {
     this.builder.setConditional("AND");
     //@ts-ignore
     return this.if(attrPath, operator, attrValue);
   }
 
-  orIf(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): QueryAdapter<T>;
-  orIf(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): QueryAdapter<T>;
-  orIf(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): QueryAdapter<T>;
-  orIf(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): QueryAdapter<T>;
-  orIf(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): QueryAdapter<T>;
-  orIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T>;
-  orIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T> {
+  orIf(attrPath: AttributePath<T>, operator: "<" | "<=" | "<>" | "=" | ">" | ">=", attrValue: string | number): QueryAdapter<T, I>;
+  orIf(attrPath: AttributePath<T>, operator: "AttributeType", attrType: AttributeValueType): QueryAdapter<T, I>;
+  orIf(attrPath: AttributePath<T>, operator: "BeginsWith", substring: string): QueryAdapter<T, I>;
+  orIf(attrPath: AttributePath<T>, operator: "Contains", searchValue: string | number): QueryAdapter<T, I>;
+  orIf(attrPath: AttributePath<T>, operator: "Exists" | "DoesNotExist"): QueryAdapter<T, I>;
+  orIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T, I>;
+  orIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T, I> {
     this.builder.setConditional("OR");
     //@ts-ignore
     return this.if(attrPath, operator, attrValue);
@@ -123,7 +123,7 @@ export class QueryAdapter<T> implements Adapter<T[]> {
     return this;
   }
 
-  select(...attributesToProject: AttributePath<T>[]): QueryAdapter<T> {
+  select(...attributesToProject: AttributePath<T>[]): QueryAdapter<T, I> {
     this.builder.projectAttributes(attributesToProject);
     return this;
   }

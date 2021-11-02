@@ -49,10 +49,18 @@ export const UserTableProps: TableProps<User, string> = {
   partitionKey: { name: "userId", type: AttributeType.STRING }
 };
 
-export const MusicTableProps: TableProps<Music, string> = {
+export const MusicTableProps: TableProps<Music, "genre-year-index"> = {
   tableName: "Music",
   partitionKey: { name: "artist", type: AttributeType.STRING },
-  sortKey: { name: "songTitle", type: AttributeType.STRING }
+  sortKey: { name: "songTitle", type: AttributeType.STRING },
+  indexMap: {
+    "genre-year-index": {
+      indexName: "genre-year-index",
+      indexType: "Global",
+      partitionKey: { name: "genre", type: AttributeType.STRING },
+      sortKey: { name: "year", type: AttributeType.NUMBER }
+    }
+  }
 };
 
 export const $User = typedPath<User>();

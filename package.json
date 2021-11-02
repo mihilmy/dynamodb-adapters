@@ -1,6 +1,6 @@
 {
   "name": "@mihilmy/dynamodb-adapters",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A simpler way to write DynamoDB expressions",
   "main": "lib/index.js",
   "scripts": {
