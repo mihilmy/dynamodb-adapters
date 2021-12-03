@@ -4,7 +4,7 @@ import { PromiseResult, Request } from "aws-sdk/lib/request";
 
 import { toDynamoDBItem } from "../utils";
 
-import { BatchRequests } from "./Expressions";
+import { BatchRequests, DeleteInput } from "./Expressions";
 import { TableProps } from "./Props";
 
 abstract class RequestQueue<R = any> {
@@ -66,6 +66,31 @@ export class BatchPutQueue<R> extends RequestQueue<R> {
 
   protected createRequest(item: any): WriteRequest {
     return { PutRequest: { Item: toDynamoDBItem(item) } };
+  }
+
+  protected setMaxBatchSize(): void {
+    this.maxBatchSize = 25;
+  }
+}
+
+export class BatchDeleteQueue<R> extends RequestQueue<R> {
+  protected handleResponse(output: PromiseResult<BatchWriteItemOutput, AWSError>) {
+    this.enqueue(output.UnprocessedItems);
+    // @ts-ignore
+    return output.UnprocessedItems?.[this.tableProps.tableName]?.map((item) => item.DeleteRequest?.Item as R) ?? [];
+  }
+
+  protected createRequest(item: any): WriteRequest {
+    const DeleteRequest = { Key: {} } as DeleteInput;
+    const partitionKey = this.tableProps.partitionKey.name;
+    const sortKey = this.tableProps.sortKey?.name;
+
+    DeleteRequest.Key[partitionKey] = item[partitionKey];
+
+    if (sortKey && item[sortKey]) {
+      DeleteRequest.Key[sortKey] = item[sortKey];
+    }
+    return { DeleteRequest };
   }
 
   protected setMaxBatchSize(): void {

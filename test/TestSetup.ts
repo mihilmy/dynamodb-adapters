@@ -10,6 +10,17 @@ class UserTable {
     return Item as User;
   }
 
+  async add(userOptions: Partial<User>) {
+    const userItem = new User(userOptions);
+    await DocClient.put({ TableName: UserTableProps.tableName, Item: userItem }).promise();
+
+    return userItem as User;
+  }
+
+  async delete(user: Partial<User>) {
+    await DocClient.delete({ TableName: UserTableProps.tableName, Key: { userId: user.userId } }).promise();
+  }
+
   async list() {
     const { Items = [] } = await DocClient.scan({ TableName: "Users" }).promise();
     console.log(inspect(Items, false, null, true));
