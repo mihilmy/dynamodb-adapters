@@ -35,7 +35,7 @@ export class DeleteAdapter<T> implements Adapter<T | false | undefined> {
     }
   }
 
-  delete(item: T): DeleteAdapter<T> {
+  delete(item: Partial<T>): DeleteAdapter<T> {
     const partitionKey = this.tableProps.partitionKey.name;
     const sortKey = this.tableProps.sortKey?.name;
     this.deleteExpression.Key[partitionKey] = item[partitionKey];
