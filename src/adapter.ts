@@ -1,7 +1,9 @@
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
 
 // Adapter implementations
+import { BatchDeleteAdapter } from "./adapters/BatchDeleteAdapter";
 import { BatchPutAdapter } from "./adapters/BatchPutAdapter";
+import { DeleteAdapter } from "./adapters/DeleteAdapter";
 import { PutAdapter } from "./adapters/PutAdapter";
 import { UpdateAdapter } from "./adapters/UpdateAdapter";
 
@@ -50,7 +52,25 @@ export class DynamoDBAdapter<DataType extends {}, IndexName extends string = str
     throw new Error("Unable to resolve the write request to correct adapter, its likely you are not using the right options");
   }
 
-  delete(items: DeleteRequest<DataType>) {
-    throw new Error("Deletes not supporter yet 😢");
+  delete(items: DataType): DeleteAdapter<DataType>;
+  delete(items: DataType[]): BatchDeleteAdapter<DataType>;
+
+  /**
+   * Deletes an item or items in DynamoDB using DeleteItem or BatchDeleteItem APIs. The method will detect the correct API to use depending
+   * on the provided items
+   *
+   * @param items items to be deleted in dynamo. must include the partitionKey and sortKey to succeed
+   * @returns an adapter implementation that will support a delete operation
+   */
+  delete(items: DeleteRequest<DataType>): Adapter<any> {
+    if (Array.isArray(items)) {
+      return new BatchDeleteAdapter<DataType>(this.docClient, this.tableProps).delete(items);
+    }
+
+    if (typeof items === "object") {
+      return new DeleteAdapter<DataType>(this.docClient, this.tableProps).delete(items);
+    }
+
+    throw new Error("Unable to process the delete request");
   }
 }

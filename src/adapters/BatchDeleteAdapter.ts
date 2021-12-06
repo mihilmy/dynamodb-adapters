@@ -8,7 +8,7 @@ import { BatchDeleteQueue } from "../types/RequestQueue";
 import { flattenPromises } from "../utils";
 
 export class BatchDeleteAdapter<T> extends DeleteAdapter<T> {
-  private items: T[] = [];
+  private items: Partial<T>[] = [];
   private returnValuesRequested: boolean = false;
 
   constructor(docClient: DocumentClient, tableProps: TableProps<T, string>) {
@@ -40,7 +40,7 @@ export class BatchDeleteAdapter<T> extends DeleteAdapter<T> {
   }
 
   //@ts-ignore
-  delete(items: T[]): BatchDeleteAdapter<T> {
+  delete(items: Partial<T>[]): BatchDeleteAdapter<T> {
     this.items = items;
     return this;
   }
