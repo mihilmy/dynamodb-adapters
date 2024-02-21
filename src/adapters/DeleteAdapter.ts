@@ -1,19 +1,21 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { AWSError } from "aws-sdk/lib/error";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 
 import { Adapter, ConditionalPutOperator } from "../types/Adapter";
 import { TableProps } from "../types/Props";
 
 import { DeleteBuilder } from "../expressions/DeleteBuilder";
-import { AttributeValueType, DynamoErrorCode } from "../types/Dynamo";
+import { AttributeValueType } from "../types/Dynamo";
 import { AttributePath, DeleteInput } from "../types/Expressions";
-import { fromDynamoItem } from "../utils";
 
 export class DeleteAdapter<T> implements Adapter<T | false | undefined> {
   protected builder: DeleteBuilder<T>;
   protected deleteExpression: DeleteInput;
 
-  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, string>) {
+  constructor(
+    protected docClient: DynamoDBDocument,
+    protected tableProps: TableProps<T, string>
+  ) {
     this.builder = new DeleteBuilder(tableProps);
     this.deleteExpression = { TableName: tableProps.tableName, Key: {}, ReturnValues: "ALL_OLD" } as DeleteInput;
   }
@@ -24,24 +26,26 @@ export class DeleteAdapter<T> implements Adapter<T | false | undefined> {
     console.debug(this.deleteExpression);
 
     try {
-      const { Attributes: oldItem } = await this.docClient.delete(this.deleteExpression).promise();
-      return fromDynamoItem<T>(oldItem);
+      const { Attributes: oldItem } = await this.docClient.delete(this.deleteExpression);
+      return oldItem as T;
     } catch (_error) {
-      const error = _error as AWSError;
       // Swallow since this should not be treated as an error if the client configured an update expression
-      if (error.code === DynamoErrorCode.CCF) return false;
+      if (_error instanceof ConditionalCheckFailedException) {
+        return false;
+      }
 
-      throw error;
+      throw _error;
     }
   }
 
   delete(item: Partial<T>): DeleteAdapter<T> {
     const partitionKey = this.tableProps.partitionKey.name;
     const sortKey = this.tableProps.sortKey?.name;
-    this.deleteExpression.Key[partitionKey] = item[partitionKey];
 
-    if (sortKey && item[sortKey]) {
-      this.deleteExpression.Key[sortKey] = item[sortKey];
+    this.deleteExpression.Key[partitionKey] = item[partitionKey] as AttributeValue;
+
+    if (sortKey && sortKey in item) {
+      this.deleteExpression.Key[sortKey] = item[sortKey] as AttributeValue;
     }
 
     return this;

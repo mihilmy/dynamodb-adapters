@@ -1,4 +1,4 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
 import { PutAdapter } from "./PutAdapter";
 
@@ -7,16 +7,17 @@ import { BatchPutInput } from "../types/Expressions";
 import { BatchPutQueue } from "../types/RequestQueue";
 import { flattenPromises } from "../utils";
 
-export class BatchPutAdapter<T> extends PutAdapter<T> {
+export class BatchPutAdapter<T extends unknown> extends PutAdapter<T> {
   private items: T[] = [];
   private returnValuesRequested: boolean = false;
 
-  constructor(docClient: DocumentClient, tableProps: TableProps<T, string>) {
+  constructor(docClient: DynamoDBDocument, tableProps: TableProps<T, string>) {
     super(docClient, tableProps);
+    docClient.send;
   }
 
   //@ts-ignore
-  async call(): Promise<(T | false | undefined)[]> {
+  async call(): Promise<(T | false | undefined | null | unknown)[]> {
     let promiseList;
 
     if (this.builder.hasExpression() || this.returnValuesRequested) {

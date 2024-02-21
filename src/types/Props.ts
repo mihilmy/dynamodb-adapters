@@ -1,6 +1,5 @@
-import * as SDK from "aws-sdk/clients/dynamodb";
-import * as CDK from "@aws-cdk/aws-dynamodb";
-
+import { CreateTableCommandInput, KeySchemaElement, Projection, ProvisionedThroughput, GlobalSecondaryIndex as DynamoDBGlobalSecondaryIndex, LocalSecondaryIndex as DynamoDBLocalSecondaryIndex } from "@aws-sdk/client-dynamodb";
+import { aws_dynamodb as CDK } from "aws-cdk-lib";
 /******************************************************************************************************************************************
  *                                                           CDK TYPE EXTENSIONS                                                          *
  ******************************************************************************************************************************************/
@@ -50,13 +49,13 @@ export type IndexMap<IndexName extends string, DataType> = Record<IndexName, Glo
 /**
  * Constructs the native table props object as defined by DynamoDB SDK team
  */
-export class CreateTableInput implements SDK.CreateTableInput {
-  public ProvisionedThroughput: SDK.ProvisionedThroughput = { ReadCapacityUnits: 10, WriteCapacityUnits: 10 };
-  public KeySchema: SDK.KeySchema = [];
-  public TableName: SDK.TableName;
-  public GlobalSecondaryIndexes?: SDK.GlobalSecondaryIndexList;
-  public LocalSecondaryIndexes?: SDK.LocalSecondaryIndexList;
-  public AttributeDefinitions: SDK.AttributeDefinitions = [];
+export class CreateTableInput implements CreateTableCommandInput {
+  public ProvisionedThroughput: ProvisionedThroughput = { ReadCapacityUnits: 10, WriteCapacityUnits: 10 };
+  public KeySchema: NonNullable<CreateTableCommandInput["KeySchema"]> = [];
+  public TableName: CreateTableCommandInput["TableName"];
+  public GlobalSecondaryIndexes?: CreateTableCommandInput["GlobalSecondaryIndexes"];
+  public LocalSecondaryIndexes?: CreateTableCommandInput["LocalSecondaryIndexes"];
+  public AttributeDefinitions: NonNullable<CreateTableCommandInput["AttributeDefinitions"]> = [];
 
   constructor(tableProps: TableProps<any, any>) {
     this.TableName = tableProps.tableName;
@@ -84,7 +83,7 @@ export class CreateTableInput implements SDK.CreateTableInput {
     }
   }
 
-  protected addKey(keySchema: SDK.KeySchema, keyType: "HASH" | "RANGE", attribute?: Attribute<any>) {
+  protected addKey(keySchema: KeySchemaElement[], keyType: "HASH" | "RANGE", attribute?: Attribute<any>) {
     if (attribute) {
       keySchema.push({ AttributeName: String(attribute.name), KeyType: keyType });
       const notExists = !this.AttributeDefinitions.find(({ AttributeName }) => AttributeName === attribute.name);
@@ -98,10 +97,10 @@ export class CreateTableInput implements SDK.CreateTableInput {
 /**
  * Native GlobalSecondaryIndex implementation creating a basic props
  */
-export class GlobalSecondaryIndex implements SDK.GlobalSecondaryIndex {
-  ProvisionedThroughput: SDK.ProvisionedThroughput = { ReadCapacityUnits: 10, WriteCapacityUnits: 10 };
-  KeySchema: SDK.KeySchema = [];
-  Projection: SDK.Projection = { ProjectionType: "ALL" };
+export class GlobalSecondaryIndex implements DynamoDBGlobalSecondaryIndex {
+  ProvisionedThroughput: ProvisionedThroughput = { ReadCapacityUnits: 10, WriteCapacityUnits: 10 };
+  KeySchema: KeySchemaElement[] = [];
+  Projection: Projection = { ProjectionType: "ALL" };
 
   constructor(public IndexName: string) {}
 }
@@ -109,10 +108,10 @@ export class GlobalSecondaryIndex implements SDK.GlobalSecondaryIndex {
 /**
  * Native GlobalSecondaryIndex implementation creating a basic props
  */
-export class LocalSecondaryIndex implements SDK.LocalSecondaryIndex {
-  ProvisionedThroughput: SDK.ProvisionedThroughput = { ReadCapacityUnits: 10, WriteCapacityUnits: 10 };
-  KeySchema: SDK.KeySchema = [];
-  Projection: SDK.Projection = { ProjectionType: "ALL" };
+export class LocalSecondaryIndex implements DynamoDBLocalSecondaryIndex {
+  ProvisionedThroughput: ProvisionedThroughput = { ReadCapacityUnits: 10, WriteCapacityUnits: 10 };
+  KeySchema: KeySchemaElement[] = [];
+  Projection: Projection = { ProjectionType: "ALL" };
 
   constructor(public IndexName: string) {}
 }

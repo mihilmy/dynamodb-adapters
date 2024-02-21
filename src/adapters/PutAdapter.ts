@@ -1,19 +1,20 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { AWSError } from "aws-sdk/lib/error";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 
 import { PutBuilder } from "../expressions/PutBuilder";
-import { fromDynamoItem, toDynamoDBItem } from "../utils";
-
 import { PutInput, AttributePath } from "../types/Expressions";
 import { TableProps } from "../types/Props";
 import { Adapter, ConditionalPutOperator } from "../types/Adapter";
-import { AttributeValueType, DynamoErrorCode } from "../types/Dynamo";
+import { AttributeValueType } from "../types/Dynamo";
 
-export class PutAdapter<T> implements Adapter<T | false | undefined> {
+export class PutAdapter<T extends unknown> implements Adapter<T | false | undefined> {
   protected builder: PutBuilder<T>;
   protected putExpression: PutInput;
 
-  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, string>) {
+  constructor(
+    protected docClient: DynamoDBDocument,
+    protected tableProps: TableProps<T, string>
+  ) {
     this.builder = new PutBuilder(tableProps);
     this.putExpression = { TableName: tableProps.tableName, ReturnValues: "ALL_OLD" } as PutInput;
   }
@@ -24,19 +25,20 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
     console.debug(this.putExpression);
 
     try {
-      const { Attributes: oldItem } = await this.docClient.put(this.putExpression).promise();
-      return fromDynamoItem<T>(oldItem);
+      const { Attributes: oldItem } = await this.docClient.put(this.putExpression);
+      return oldItem as T;
     } catch (_error) {
-      const error = _error as AWSError;
       // Swallow since this should not be treated as an error if the client configured an update expression
-      if (error.code === DynamoErrorCode.CCF) return false;
+      if (_error instanceof ConditionalCheckFailedException) {
+        return false;
+      }
 
-      throw error;
+      throw _error;
     }
   }
 
-  put(item: T): PutAdapter<T> {
-    this.putExpression.Item = toDynamoDBItem(item);
+  put(item: unknown): PutAdapter<T> {
+    this.putExpression.Item = item as Record<string, unknown>;
     return this;
   }
 
@@ -88,7 +90,7 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
   andIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
   andIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
     this.builder.setConditional("AND");
-    //@ts-ignore
+    //@ts-expect-error method overloading
     return this.if(attrPath, operator, attrValue);
   }
 
@@ -100,7 +102,7 @@ export class PutAdapter<T> implements Adapter<T | false | undefined> {
   orIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): PutAdapter<T>;
   orIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): PutAdapter<T> {
     this.builder.setConditional("OR");
-    //@ts-ignore
+    //@ts-expect-error method overloading
     return this.if(attrPath, operator, attrValue);
   }
 }

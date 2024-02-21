@@ -1,4 +1,4 @@
-import { AttributeType } from "@aws-cdk/aws-dynamodb";
+import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import { generate as uuid } from "short-uuid";
 import { typedPath } from "typed-path";
 
@@ -20,7 +20,7 @@ export class User {
     this.locations = [];
 
     for (const override of Object.keys(user)) {
-      //@ts-ignores
+      // @ts-expect-error object.keys returns string which can't be used as index signature
       this[override] = user[override];
     }
   }
@@ -38,7 +38,7 @@ export class Music {
     this.createdAt = new Date().toISOString();
 
     for (const override of Object.keys(music)) {
-      //@ts-ignores
+      // @ts-expect-error object.keys returns string which can't be used as index signature
       this[override] = music[override];
     }
   }

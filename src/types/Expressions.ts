@@ -1,25 +1,34 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import * as DynamoDbClient from "@aws-sdk/lib-dynamodb";
+import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
+
 import { TypedPathKey } from "typed-path";
 
 import { AttributeValueType } from "./Dynamo";
+
+export type NonNullableFields<TObject> = {
+  [Key in keyof TObject]: NonNullable<TObject[Key]>;
+}
+
+type MakeRequiredFields<TObject, TFields extends keyof TObject> = Omit<TObject, TFields> & NonNullableFields<Pick<TObject, TFields>>;
 
 /******************************************************************************************************************************************
  *                                                  TYPE ALIASING FOR DOC CLIENT                                                          *
  ******************************************************************************************************************************************/
 
-export type QueryInput = DocumentClient.QueryInput;
-export type GetInput = DocumentClient.GetItemInput;
-export type PutInput = DocumentClient.PutItemInput;
-export type UpdateInput = DocumentClient.UpdateItemInput;
-export type DeleteInput = DocumentClient.DeleteItemInput;
-export type BatchGetInput = DocumentClient.BatchGetItemInput;
-export type BatchPutInput = DocumentClient.BatchWriteItemInput;
-export type BatchDeleteInput = DocumentClient.BatchWriteItemInput;
-export type ScanInput = DocumentClient.ScanInput;
+export type QueryInput = DynamoDbClient.QueryCommandInput;
+export type GetInput = MakeRequiredFields<DynamoDbClient.GetCommandInput, "Key">;
+export type PutInput = DynamoDbClient.PutCommandInput;
+export type UpdateInput = MakeRequiredFields<DynamoDbClient.UpdateCommandInput, "Key">;
+export type DeleteInput = MakeRequiredFields<DynamoDbClient.DeleteCommandInput, "Key">;
+export type BatchGetInput = DynamoDbClient.BatchGetCommandInput;
+export type BatchPutInput = DynamoDbClient.BatchWriteCommandInput;
+export type BatchDeleteInput = DynamoDbClient.BatchWriteCommandInput;
+export type ScanInput = DynamoDbClient.ScanCommandInput;
 export type BatchRequests = BatchGetInput | BatchPutInput | BatchDeleteInput;
 export type CommonInput = QueryInput & GetInput & PutInput & BatchGetInput & BatchPutInput & BatchDeleteInput & ScanInput & UpdateInput;
-export type ExpressionNameMap = DocumentClient.ExpressionAttributeNameMap;
-export type ExpressionValueMap = DocumentClient.ExpressionAttributeValueMap;
+export type BatchResponses = DynamoDbClient.BatchGetCommandOutput | DynamoDbClient.BatchWriteCommandOutput;
+export type ExpressionNameMap = Record<string, string>;
+export type ExpressionValueMap = Record<string, NativeAttributeValue>;
 
 /******************************************************************************************************************************************
  *                                                  INTERNAL EXPRESSION OPERATORS                                                         *

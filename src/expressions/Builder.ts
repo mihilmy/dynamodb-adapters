@@ -122,7 +122,7 @@ export abstract class ExpressionsBuilder<T> {
     return this;
   }
 
-  protected addCommonInputs<R>(baseInput: R) {
+  protected addCommonInputs<R extends Partial<CommonInput>>(baseInput: R) {
     const result: Partial<CommonInput> = { ...baseInput };
     // Add any common expressions BEFORE committing the attribute names and values
     if (this.limit) result.Limit = this.limit;

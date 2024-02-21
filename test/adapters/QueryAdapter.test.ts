@@ -1,5 +1,4 @@
 import { QueryAdapter } from "../../src/adapters/QueryAdapter";
-import { toDynamoDBItem } from "../../src/utils";
 
 import { DocClient } from "../TestSetup";
 import { Music, MusicTableProps, User, UserTableProps } from "../TestData";
@@ -63,7 +62,7 @@ test("T4: Fetching using GSI", async () => {
 
 async function addUser(userOptions: Partial<User>) {
   const userItem = new User(userOptions);
-  await DocClient.put({ TableName: UserTableProps.tableName, Item: toDynamoDBItem(userItem) }).promise();
+  await DocClient.put({ TableName: UserTableProps.tableName, Item: userItem });
 
   return userItem;
 }
@@ -72,7 +71,7 @@ async function addMusic(musicOpts: Partial<Music>[] | Partial<Music>) {
   musicOpts = Array.isArray(musicOpts) ? musicOpts : [musicOpts];
   const promises = musicOpts.map(async (m) => {
     const musicItem = new Music(m);
-    await DocClient.put({ TableName: MusicTableProps.tableName, Item: toDynamoDBItem(musicItem) }).promise();
+    await DocClient.put({ TableName: MusicTableProps.tableName, Item: musicItem });
 
     return musicItem;
   });

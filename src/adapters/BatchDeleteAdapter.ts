@@ -1,7 +1,6 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
 import { DeleteAdapter } from "./DeleteAdapter";
-
 import { TableProps } from "../types/Props";
 import { BatchDeleteInput } from "../types/Expressions";
 import { BatchDeleteQueue } from "../types/RequestQueue";
@@ -11,12 +10,12 @@ export class BatchDeleteAdapter<T> extends DeleteAdapter<T> {
   private items: Partial<T>[] = [];
   private returnValuesRequested: boolean = false;
 
-  constructor(docClient: DocumentClient, tableProps: TableProps<T, string>) {
+  constructor(docClient: DynamoDBDocument, tableProps: TableProps<T, string>) {
     super(docClient, tableProps);
   }
 
-  //@ts-ignore
-  async call(): Promise<(T | false | undefined)[]> {
+  // @ts-ignore
+  async call(): Promise<(T | false | undefined | null | unknown)[]> {
     let promiseList;
 
     if (this.builder.hasExpression() || this.returnValuesRequested) {
