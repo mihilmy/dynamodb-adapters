@@ -3,7 +3,16 @@ import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { inspect } from "util";
 import { User, UserTableProps } from "./TestData";
 
-export const DocClient = DynamoDBDocument.from(new DynamoDB({ endpoint: "http://127.0.0.1:8000", region: "us-east-1" }));
+export const DocClient = DynamoDBDocument.from(
+  new DynamoDB({
+    endpoint: "http://127.0.0.1:8000",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: "fakeMyKeyId",
+      secretAccessKey: "fakeSecretAccessKey"
+    }
+  })
+);
 
 class UserTable {
   async get(userId: string) {
