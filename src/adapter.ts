@@ -1,4 +1,4 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
 // Adapter implementations
 import { BatchDeleteAdapter } from "./adapters/BatchDeleteAdapter";
@@ -18,7 +18,7 @@ import { TableProps } from "./types/Props";
  * Wrapper on top of the implemented adapters to simplify the choice and prop drilling required for setting up values
  */
 export class DynamoDBAdapter<DataType extends {}, IndexName extends string = string> {
-  constructor(private docClient: DocumentClient, private tableProps: TableProps<DataType, IndexName>) {}
+  constructor(private docClient: DynamoDBDocument, private tableProps: TableProps<DataType, IndexName>) {}
 
   read(items: ReadRequest<DataType>, options?: ReadOptions) {
     throw new Error("Reading not supporter yet 😢");

@@ -1,18 +1,20 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
 import { GetBuilder } from "../expressions/GetBuilder";
-import { fromDynamoItem } from "../utils";
 
 import { GetInput, AttributePath } from "../types/Expressions";
 import { TableProps } from "../types/Props";
 import { Adapter } from "../types/Adapter";
-import { Key } from "../types/Dynamo";
 
 export class GetAdapter<T> implements Adapter<T | undefined> {
   protected builder: GetBuilder<T>;
   protected getInput: GetInput;
 
-  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, string>) {
+  constructor(
+    protected docClient: DynamoDBDocument,
+    protected tableProps: TableProps<T, string>
+  ) {
     this.builder = new GetBuilder(tableProps);
     this.getInput = { TableName: tableProps.tableName, Key: {} };
   }
@@ -20,11 +22,11 @@ export class GetAdapter<T> implements Adapter<T | undefined> {
   async call(): Promise<T | undefined> {
     const getInput = this.builder.build(this.getInput);
     console.debug(getInput);
-    const { Item } = await this.docClient.get(getInput).promise();
-    return fromDynamoItem<T>(Item);
+    const { Item } = await this.docClient.get(getInput);
+    return Item as T;
   }
 
-  get(partitionKey: Key, sortKey?: Key): GetAdapter<T> {
+  get(partitionKey: NativeAttributeValue, sortKey?: NativeAttributeValue): GetAdapter<T> {
     this.getInput.Key[this.tableProps.partitionKey.name] = partitionKey;
 
     if (this.tableProps.sortKey && sortKey) {

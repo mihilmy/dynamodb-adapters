@@ -19,7 +19,7 @@ test("T2: Fetch and projection", async () => {
 
 async function addUser(userOptions: Partial<User>) {
   const userItem = new User(userOptions);
-  await DocClient.put({ TableName: UserTableProps.tableName, Item: userItem }).promise();
+  await DocClient.put({ TableName: UserTableProps.tableName, Item: userItem });
 
   return userItem;
 }

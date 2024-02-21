@@ -1,9 +1,9 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { AWSError } from "aws-sdk/lib/error";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { ConditionalCheckFailedException, DynamoDBServiceException } from "@aws-sdk/client-dynamodb";
 import { TypedPathKey } from "typed-path";
 
 import { UpdateBuilder } from "../expressions/UpdateBuilder";
-import { fromDynamoItem, toPath } from "../utils";
+import { toPath } from "../utils";
 
 import { TableProps } from "../types/Props";
 import { AttributePath, UpdateInput } from "../types/Expressions";
@@ -18,7 +18,10 @@ export class UpdateAdapter<T> implements Adapter<T | false | undefined> {
   protected isShiftRequested: boolean;
   protected retryCount: number = 0;
 
-  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, string>) {
+  constructor(
+    protected docClient: DynamoDBDocument,
+    protected tableProps: TableProps<T, string>
+  ) {
     this.builder = new UpdateBuilder(tableProps);
     this.updateInput = { TableName: tableProps.tableName, ReturnValues: "ALL_OLD", Key: {} } as UpdateInput;
   }
@@ -29,21 +32,23 @@ export class UpdateAdapter<T> implements Adapter<T | false | undefined> {
     console.debug(this.updateInput);
 
     try {
-      const { Attributes: oldItem } = await this.docClient.update(this.updateInput).promise();
-      return fromDynamoItem<T>(oldItem);
+      const { Attributes: oldItem } = await this.docClient.update(this.updateInput);
+      return oldItem as T;
     } catch (_error) {
-      const error = _error as AWSError;
       // Swallow since this should not be treated as an error if the client configured an update expression
-      if (error.code === DynamoErrorCode.CCF) return false;
+      if (_error instanceof ConditionalCheckFailedException) {
+        return false;
+      }
 
       // Specific edge case when we are updating nested paths within JSON documents which DynamoDB does not support directly
-      const isPathUpdateFailure = error.code === DynamoErrorCode.Validation && error.message === DynamoDBErrorMessage.InvalidUpdatePath;
+      const isPathUpdateFailure = _error instanceof DynamoDBServiceException && _error.name === DynamoErrorCode.Validation && _error.message === DynamoDBErrorMessage.InvalidUpdatePath;
+
       // Adds protection to avoid retrying endlessly this can be improved by using the builders max depth instead
       if (isPathUpdateFailure && this.isShiftRequested && this.retryCount++ < MAX_JSON_DOCUMENT_DEPTH) {
         return this.call();
       }
 
-      throw error;
+      throw _error;
     }
   }
 

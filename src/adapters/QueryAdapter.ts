@@ -1,4 +1,5 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+
 import { QueryBuilder } from "../expressions/QueryBuilder";
 import { SortOrder, AttributePath, QueryInput } from "../types/Expressions";
 import { AttributeValueType } from "../types/Dynamo";
@@ -9,7 +10,10 @@ export class QueryAdapter<T, I extends string> implements Adapter<T[]> {
   private builder: QueryBuilder<T>;
   private queryInput: QueryInput;
 
-  constructor(protected docClient: DocumentClient, protected tableProps: TableProps<T, I>) {
+  constructor(
+    protected docClient: DynamoDBDocument,
+    protected tableProps: TableProps<T, I>
+  ) {
     this.builder = new QueryBuilder(tableProps);
     this.queryInput = { TableName: tableProps.tableName } as QueryInput;
   }
@@ -20,7 +24,7 @@ export class QueryAdapter<T, I extends string> implements Adapter<T[]> {
     console.debug(queryInput);
 
     do {
-      const queryOutput = await this.docClient.query(queryInput).promise();
+      const queryOutput = await this.docClient.query(queryInput);
 
       // Adjust the exclusive start key for pagination support
       queryInput.ExclusiveStartKey = queryOutput.LastEvaluatedKey;
@@ -97,7 +101,7 @@ export class QueryAdapter<T, I extends string> implements Adapter<T[]> {
   andIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T, I>;
   andIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T, I> {
     this.builder.setConditional("AND");
-    //@ts-ignore
+    // @ts-expect-error method overloading type issues
     return this.if(attrPath, operator, attrValue);
   }
 
@@ -109,7 +113,7 @@ export class QueryAdapter<T, I extends string> implements Adapter<T[]> {
   orIf(attrPath: AttributePath<T>, operator: "InList", valueList: (string | number)[]): QueryAdapter<T, I>;
   orIf(attrPath: AttributePath<T>, operator: ConditionalPutOperator, attrValue?: any): QueryAdapter<T, I> {
     this.builder.setConditional("OR");
-    //@ts-ignore
+    // @ts-expect-error method overloading type issues
     return this.if(attrPath, operator, attrValue);
   }
 

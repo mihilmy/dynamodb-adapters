@@ -48,7 +48,7 @@ test("T3: Complex operations on items", async () => {
     .append("skills", new Set(["Java", "Typescript"]))
     .call();
   const result3 = await UsersTable.get(user.userId);
-  expect(result3.skills.values).toEqual(["Java", "Typescript"]);
+  expect([...result3.skills]).toEqual(["Java", "Typescript"]);
 
   // Append to a list
   await new UpdateAdapter<User>(DocClient, UserTableProps)
@@ -78,7 +78,7 @@ test("T3: Complex operations on items", async () => {
     .delete($User.skills, new Set(["Java"]))
     .call();
   const result7 = await UsersTable.get(user.userId);
-  expect(result7.skills.values).toEqual(["Typescript"]);
+  expect([...result7.skills]).toEqual(["Typescript"]);
 });
 
 test("T4: Testing partial path updates", async () => {
@@ -100,5 +100,5 @@ test("T4: Testing partial path updates", async () => {
     .updatePath($User.connections[connectionId].skills, new Set(["Java"]), true)
     .call();
   const result2 = await UsersTable.get(user.userId);
-  expect(result2.connections[connectionId].skills.values).toContain("Java");
+  expect([...result2.connections[connectionId].skills]).toEqual(expect.arrayContaining(["Java"]));
 });

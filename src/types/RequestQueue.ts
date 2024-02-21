@@ -1,36 +1,36 @@
-import { BatchGetItemOutput, BatchWriteItemOutput, Key, WriteRequest } from "aws-sdk/clients/dynamodb";
-import { AWSError } from "aws-sdk/lib/error";
-import { PromiseResult, Request } from "aws-sdk/lib/request";
+import { WriteRequest } from "@aws-sdk/client-dynamodb";
+import { BatchWriteCommandOutput } from "@aws-sdk/lib-dynamodb";
 
-import { toDynamoDBItem } from "../utils";
-
-import { BatchRequests, DeleteInput } from "./Expressions";
+import { BatchDeleteInput, BatchPutInput, BatchRequests, BatchResponses, DeleteInput } from "./Expressions";
 import { TableProps } from "./Props";
 
-abstract class RequestQueue<R = any> {
-  private batchRequestList: BatchRequests[] = [];
+abstract class RequestQueue<Request extends BatchRequests, R = BatchResponses> {
+  private batchRequestList: Request[] = [];
   protected maxBatchSize: number = 25;
 
-  constructor(protected tableProps: TableProps<any, string>, items: any[]) {
+  constructor(
+    protected tableProps: TableProps<any, string>,
+    items: any[]
+  ) {
     this.initRequestQueue(items);
   }
 
-  drain(callback: (request: any) => Request<any, AWSError>): Promise<R[]>[] {
-    let request: BatchRequests | undefined;
+  drain(callback: (request: Request) => Promise<BatchWriteCommandOutput>): Promise<R[]>[] {
+    let request: Request | undefined;
     const promiseList = [];
 
     while ((request = this.batchRequestList.shift())) {
       // prettier-ignore
-      const promise = callback(request).promise().then((output) => this.handleResponse(output))
+      const promise = callback(request).then((output) => this.handleResponse(output))
       promiseList.push(promise);
     }
 
     return promiseList;
   }
 
-  protected abstract createRequest(item: any): WriteRequest | Key;
+  protected abstract createRequest(item: any): WriteRequest;
   protected abstract setMaxBatchSize(): void;
-  protected abstract handleResponse(output: BatchWriteItemOutput | BatchGetItemOutput): R[];
+  protected abstract handleResponse(output: BatchResponses): R[];
 
   protected enqueue(items?: BatchRequests["RequestItems"]) {
     if (!items?.[this.tableProps.tableName]) return 0;
@@ -45,7 +45,7 @@ abstract class RequestQueue<R = any> {
     }
   }
 
-  private createChunk(items: any[], currentChunk: number): (WriteRequest | Key)[] {
+  private createChunk(items: any[], currentChunk: number): WriteRequest[] {
     const length = items.length;
     const itemList = [];
     let startIndex = currentChunk * this.maxBatchSize;
@@ -57,15 +57,15 @@ abstract class RequestQueue<R = any> {
   }
 }
 
-export class BatchPutQueue<R> extends RequestQueue<R> {
-  protected handleResponse(output: PromiseResult<BatchWriteItemOutput, AWSError>) {
+export class BatchPutQueue<R> extends RequestQueue<BatchPutInput, R> {
+  protected handleResponse(output: BatchWriteCommandOutput) {
     this.enqueue(output.UnprocessedItems);
-    // @ts-ignore
+
     return output.UnprocessedItems?.[this.tableProps.tableName]?.map((item) => item.PutRequest?.Item as R) ?? [];
   }
 
   protected createRequest(item: any): WriteRequest {
-    return { PutRequest: { Item: toDynamoDBItem(item) } };
+    return { PutRequest: { Item: item } };
   }
 
   protected setMaxBatchSize(): void {
@@ -73,11 +73,11 @@ export class BatchPutQueue<R> extends RequestQueue<R> {
   }
 }
 
-export class BatchDeleteQueue<R> extends RequestQueue<R> {
-  protected handleResponse(output: PromiseResult<BatchWriteItemOutput, AWSError>) {
+export class BatchDeleteQueue<R> extends RequestQueue<BatchDeleteInput, R> {
+  protected handleResponse(output: BatchWriteCommandOutput) {
     this.enqueue(output.UnprocessedItems);
-    // @ts-ignore
-    return output.UnprocessedItems?.[this.tableProps.tableName]?.map((item) => item.DeleteRequest?.Item as R) ?? [];
+
+    return output.UnprocessedItems?.[this.tableProps.tableName]?.map((item) => item.DeleteRequest?.Key as R) ?? [];
   }
 
   protected createRequest(item: any): WriteRequest {
